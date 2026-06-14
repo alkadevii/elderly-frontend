@@ -10,9 +10,7 @@ import {
 } from "antd";
 
 import { motion } from "framer-motion";
-
 import { useRouter } from "next/navigation";
-
 import { useState } from "react";
 
 import { loginUser } from "@/services/authService";
@@ -44,12 +42,21 @@ export default function LoginForm() {
       const data = await loginUser(values);
 
       if (data.user) {
+        // Save JWT Token
+        localStorage.setItem(
+          "token",
+          data.token
+        );
+
+        // Save User Info
         localStorage.setItem(
           "user",
           JSON.stringify(data.user)
         );
 
-        message.success("Login successful");
+        message.success(
+          "Login successful"
+        );
 
         if (data.user.role === "admin") {
           router.push("/admin");
@@ -60,10 +67,14 @@ export default function LoginForm() {
         message.error(data.message);
       }
     } catch (error) {
-      message.error("Something went wrong");
-    }
+      console.error(error);
 
-    setLoading(false);
+      message.error(
+        "Something went wrong"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,23 +94,16 @@ export default function LoginForm() {
       <Card
         style={{
           width: 420,
-
           borderRadius: "24px",
-
           background:
             "rgba(255,255,255,0.82)",
-
           backdropFilter: "blur(10px)",
-
           border: "none",
-
           boxShadow:
             "0 10px 30px rgba(0,0,0,0.12)",
-
           padding: "10px",
         }}
       >
-        {/* Header */}
         <div
           style={{
             textAlign: "center",
@@ -109,7 +113,8 @@ export default function LoginForm() {
           <Title
             level={2}
             style={{
-              color: colors.textPrimary,
+              color:
+                colors.textPrimary,
               marginBottom: "8px",
             }}
           >
@@ -118,16 +123,16 @@ export default function LoginForm() {
 
           <Paragraph
             style={{
-              color: colors.textSecondary,
+              color:
+                colors.textSecondary,
               marginBottom: 0,
             }}
           >
-            Login to continue using Elder
-            Care.
+            Login to continue using
+            Elder Care.
           </Paragraph>
         </div>
 
-        {/* Form */}
         <Form
           layout="vertical"
           onFinish={onFinish}
@@ -172,7 +177,6 @@ export default function LoginForm() {
             />
           </Form.Item>
 
-          {/* Animated Button */}
           <motion.div
             whileHover={{
               scale: 1.03,
@@ -188,18 +192,12 @@ export default function LoginForm() {
               size="large"
               style={{
                 ...buttonStyles,
-
                 width: "100%",
-
                 background:
                   colors.primary,
-
                 color: colors.white,
-
                 border: "none",
-
                 marginTop: "10px",
-
                 boxShadow:
                   "0 8px 20px rgba(74,144,226,0.3)",
               }}
@@ -209,18 +207,20 @@ export default function LoginForm() {
           </motion.div>
         </Form>
 
-        {/* Footer */}
         <div
           style={{
             textAlign: "center",
             marginTop: "20px",
-            color: colors.textSecondary,
+            color:
+              colors.textSecondary,
           }}
         >
           Don&apos;t have an account?{" "}
           <span
             onClick={() =>
-              router.push("/register")
+              router.push(
+                "/register"
+              )
             }
             style={{
               color: colors.primary,

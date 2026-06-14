@@ -1,15 +1,24 @@
 import { BASE_URL } from "./api";
 
-type RegisterData = {
+export type RegisterData = {
   name: string;
   email: string;
   password: string;
   role?: string;
 };
 
-type LoginData = {
+export type LoginData = {
   email: string;
   password: string;
+};
+
+export type UpdateProfileData = {
+  age?: number;
+  phone?: string;
+  address?: string;
+  emergencyContact?: string;
+  medicalConditions?: string;
+  profileImage?: string;
 };
 
 export const registerUser = async (
@@ -40,6 +49,39 @@ export const loginUser = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userData),
+    }
+  );
+
+  return response.json();
+};
+
+export const updateProfile = async (
+  userId: string,
+  profileData: UpdateProfileData
+) => {
+  const response = await fetch(
+    `${BASE_URL}/auth/profile/${userId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profileData),
+    }
+  );
+
+  return response.json();
+};
+
+export const getCurrentUser = async () => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${BASE_URL}/auth/me`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
