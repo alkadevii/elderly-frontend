@@ -16,8 +16,6 @@ export type UpdateProfileData = {
   age?: number;
   phone?: string;
   address?: string;
-  emergencyContact?: string;
-  medicalConditions?: string;
   profileImage?: string;
 };
 
@@ -29,7 +27,8 @@ export const registerUser = async (
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
       },
       body: JSON.stringify(userData),
     }
@@ -46,7 +45,8 @@ export const loginUser = async (
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
       },
       body: JSON.stringify(userData),
     }
@@ -55,35 +55,44 @@ export const loginUser = async (
   return response.json();
 };
 
-export const updateProfile = async (
-  userId: string,
-  profileData: UpdateProfileData
-) => {
-  const response = await fetch(
-    `${BASE_URL}/auth/profile/${userId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(profileData),
-    }
-  );
+export const getCurrentUser =
+  async () => {
+    const token =
+      localStorage.getItem("token");
 
-  return response.json();
-};
+    const response = await fetch(
+      `${BASE_URL}/auth/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-export const getCurrentUser = async () => {
-  const token = localStorage.getItem("token");
+    return response.json();
+  };
 
-  const response = await fetch(
-    `${BASE_URL}/auth/me`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const updateProfile =
+  async (
+    profileData: UpdateProfileData
+  ) => {
+    const token =
+      localStorage.getItem("token");
 
-  return response.json();
-};
+    const response = await fetch(
+      `${BASE_URL}/auth/profile`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type":
+            "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          profileData
+        ),
+      }
+    );
+
+    return response.json();
+  };

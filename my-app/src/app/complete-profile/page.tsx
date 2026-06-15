@@ -12,13 +12,11 @@ import {
 } from "antd";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-
 import {
   colors,
   buttonStyles,
   pageStyles,
 } from "@/styles/theme";
-
 import {
   updateProfile,
   getCurrentUser,
@@ -29,28 +27,14 @@ const { Title, Paragraph } = Typography;
 
 export default function CompleteProfilePage() {
   const router = useRouter();
-
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] =
-    useState(true);
-
-  const [userId, setUserId] =
-    useState("");
-
-  const [initialValues, setInitialValues] =
-    useState({
-      age: "",
-      phone: "",
-      address: "",
-      emergencyContact: "",
-      medicalConditions: "",
-    });
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const data =
-          await getCurrentUser();
+        const data = await getCurrentUser();
 
         if (!data.user) {
           router.push("/login");
@@ -59,61 +43,44 @@ export default function CompleteProfilePage() {
 
         const user = data.user;
 
-        setUserId(user.id);
-
-        setInitialValues({
-          age: user.age || "",
-          phone: user.phone || "",
-          address: user.address || "",
-          emergencyContact:
-            user.emergencyContact || "",
-          medicalConditions:
-            user.medicalConditions || "",
-        });
+        // Wait for form to be ready before setting values
+        if (form) {
+          form.setFieldsValue({
+            age: user.age || "",
+            phone: user.phone || "",
+            address: user.address || "",
+            emergencyContact: user.emergencyContact || "",
+            medicalConditions: user.medicalConditions || "",
+          });
+        }
       } catch (error) {
         console.error(error);
-
-        message.error(
-          "Failed to load profile"
-        );
+        message.error("Failed to load profile");
       } finally {
         setPageLoading(false);
       }
     };
 
     fetchUser();
-  }, [router]);
+  }, [form, router]);
 
-  const onFinish = async (
-    values: UpdateProfileData
-  ) => {
+  const onFinish = async (values: UpdateProfileData) => {
     try {
       setLoading(true);
 
-      const response =
-        await updateProfile(
-          userId,
-          values
-        );
+      const response = await updateProfile(values);
 
       if (response.user) {
-        message.success(
-          "Profile updated successfully"
-        );
-
+        message.success("Profile updated successfully");
         router.push("/user");
       } else {
         message.error(
-          response.message ||
-            "Failed to update profile"
+          response.message || "Failed to update profile"
         );
       }
     } catch (error) {
       console.error(error);
-
-      message.error(
-        "Something went wrong"
-      );
+      message.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -125,11 +92,9 @@ export default function CompleteProfilePage() {
         style={{
           minHeight: "100vh",
           display: "flex",
-          justifyContent:
-            "center",
+          justifyContent: "center",
           alignItems: "center",
-          background:
-            colors.background,
+          background: colors.background,
         }}
       >
         <Spin size="large" />
@@ -142,9 +107,15 @@ export default function CompleteProfilePage() {
       <style>
         {`
           @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
           }
         `}
       </style>
@@ -162,18 +133,15 @@ export default function CompleteProfilePage() {
             )
           `,
           backgroundSize: "400% 400%",
-          animation:
-            "gradientMove 12s ease infinite",
+          animation: "gradientMove 12s ease infinite",
         }}
       >
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "rgba(255,255,255,0.15)",
-            backdropFilter:
-              "blur(3px)",
+            background: "rgba(255,255,255,0.15)",
+            backdropFilter: "blur(3px)",
           }}
         />
 
@@ -203,8 +171,7 @@ export default function CompleteProfilePage() {
             <Title
               level={2}
               style={{
-                color:
-                  colors.textPrimary,
+                color: colors.textPrimary,
                 textAlign: "center",
               }}
             >
@@ -214,57 +181,37 @@ export default function CompleteProfilePage() {
             <Paragraph
               style={{
                 textAlign: "center",
-                color:
-                  colors.textSecondary,
+                color: colors.textSecondary,
                 marginBottom: 30,
               }}
             >
-              Update your personal,
-              emergency and medical
-              information anytime.
+              Update your personal, emergency and medical information anytime.
             </Paragraph>
 
-            <Form
-              layout="vertical"
-              initialValues={
-                initialValues
-              }
-              onFinish={onFinish}
-            >
-              <Form.Item
-                label="Age"
-                name="age"
-              >
-                <Input size="large" />
+            <Form form={form} layout="vertical" onFinish={onFinish}>
+              <Form.Item label="Age" name="age">
+                <Input size="large" placeholder="Enter your age" />
               </Form.Item>
 
-              <Form.Item
-                label="Phone Number"
-                name="phone"
-              >
-                <Input size="large" />
+              <Form.Item label="Phone Number" name="phone">
+                <Input size="large" placeholder="Enter phone number" />
               </Form.Item>
 
-              <Form.Item
-                label="Address"
-                name="address"
-              >
-                <Input size="large" />
+              <Form.Item label="Address" name="address">
+                <Input size="large" placeholder="Enter address" />
               </Form.Item>
 
-              <Form.Item
-                label="Emergency Contact"
-                name="emergencyContact"
-              >
-                <Input size="large" />
+              <Form.Item label="Emergency Contact" name="emergencyContact">
+                <Input
+                  size="large"
+                  placeholder="Emergency contact number"
+                />
               </Form.Item>
 
-              <Form.Item
-                label="Medical Conditions"
-                name="medicalConditions"
-              >
+              <Form.Item label="Medical Conditions" name="medicalConditions">
                 <Input.TextArea
                   rows={4}
+                  placeholder="Mention any medical conditions"
                 />
               </Form.Item>
 
@@ -283,11 +230,10 @@ export default function CompleteProfilePage() {
                   size="large"
                   style={{
                     ...buttonStyles,
-                    background:
-                      colors.primary,
-                    color:
-                      colors.white,
+                    background: colors.primary,
+                    color: colors.white,
                     border: "none",
+                    boxShadow: "0 8px 20px rgba(74,144,226,0.3)",
                   }}
                 >
                   Update Profile
