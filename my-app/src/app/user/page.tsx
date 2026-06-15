@@ -2,25 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  Typography,
-  Card,
-  Button,
-  Spin,
-} from "antd";
+import { Spin } from "antd";
 
 import { useRouter } from "next/navigation";
 
 import { getCurrentUser } from "@/services/authService";
 
-const { Title, Paragraph } = Typography;
+import UserDashboard from "@/components/Dashboard/UserDashboard";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  profileCompleted?: boolean;
-};
+import type { User } from "@/types/User";
+
+import { colors } from "@/styles/theme";
 
 export default function UserPage() {
   const [user, setUser] =
@@ -43,7 +35,8 @@ export default function UserPage() {
         }
 
         setUser(data.user);
-      } catch {
+      } catch (error) {
+        console.error(error);
         router.push("/login");
       } finally {
         setLoading(false);
@@ -61,6 +54,8 @@ export default function UserPage() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          background:
+            colors.background,
         }}
       >
         <Spin size="large" />
@@ -72,64 +67,24 @@ export default function UserPage() {
     return null;
   }
 
-  if (!user.profileCompleted) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "20px",
-        }}
-      >
-        <Card
-          style={{
-            width: 500,
-            textAlign: "center",
-            borderRadius: "16px",
-          }}
-        >
-          <Title level={2}>
-            Welcome, {user.name} 👋
-          </Title>
-
-          <Paragraph>
-            <strong>Email:</strong>{" "}
-            {user.email}
-          </Paragraph>
-
-          <Paragraph>
-            Your profile is not complete
-            yet. Please complete your
-            profile to continue.
-          </Paragraph>
-
-          <Button
-            type="primary"
-            size="large"
-            onClick={() =>
-              router.push(
-                "/complete-profile"
-              )
-            }
-          >
-            Complete Profile
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ padding: "40px" }}>
-      <Title level={2}>
-        Welcome, {user.name} 👋
-      </Title>
+    <UserDashboard
+      user={user}
+      profileCompleted={
+        user.profileCompleted
+      }
+      onCompleteProfile={() =>
+        router.push(
+          "/complete-profile"
+        )
+      }
+      onLogout={() => {
+        localStorage.removeItem(
+          "token"
+        );
 
-      <Paragraph>
-        Your profile is complete.
-      </Paragraph>
-    </div>
+        router.push("/login");
+      }}
+    />
   );
 }
