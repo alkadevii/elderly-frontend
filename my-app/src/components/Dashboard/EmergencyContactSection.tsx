@@ -12,11 +12,18 @@ import {
   Card,
   Space,
   Typography,
+  Statistic,
+  Row,
+  Col,
+  Tag,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import type { EmergencyContact, EmergencyContactFormData } from "@/types/EmergencyContact";
 import {
@@ -25,6 +32,7 @@ import {
   updateEmergencyContact,
   deleteEmergencyContact,
 } from "@/services/emergencyContactService";
+import { colors } from "@/styles/theme";
 
 const { Title } = Typography;
 
@@ -114,13 +122,47 @@ export default function EmergencyContactSection() {
   };
 
   const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Relationship", dataIndex: "relationship", key: "relationship" },
-    { title: "Phone", dataIndex: "phone", key: "phone" },
-    { title: "Email", dataIndex: "email", key: "email", render: (v: string) => v || "-" },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (name: string) => <strong>{name}</strong>,
+    },
+    {
+      title: "Relationship",
+      dataIndex: "relationship",
+      key: "relationship",
+      render: (rel: string) => <Tag color="blue" style={{ textTransform: "capitalize" }}>{rel}</Tag>,
+    },
+    {
+      title: "Phone",
+      dataIndex: "phone",
+      key: "phone",
+      render: (phone: string) => (
+        <a href={`tel:${phone}`} style={{ color: colors.primary }}>
+          <PhoneOutlined style={{ marginRight: 6 }} />
+          {phone}
+        </a>
+      ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      render: (email: string) =>
+        email ? (
+          <a href={`mailto:${email}`} style={{ color: colors.primary }}>
+            <MailOutlined style={{ marginRight: 6 }} />
+            {email}
+          </a>
+        ) : (
+          "-"
+        ),
+    },
     {
       title: "Actions",
       key: "actions",
+      width: 120,
       render: (_: unknown, record: EmergencyContact) => (
         <Space>
           <Button
@@ -140,21 +182,56 @@ export default function EmergencyContactSection() {
   ];
 
   return (
-    <Card>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Emergency Contacts</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>
-          Add Contact
-        </Button>
-      </div>
+    <div>
+      <Row gutter={20} style={{ marginBottom: 20 }}>
+        <Col span={8}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="Total Contacts"
+              value={contacts.length}
+              prefix={<TeamOutlined />}
+              styles={{ content: { color: colors.primary } }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="With Email"
+              value={contacts.filter((c) => c.email).length}
+              prefix={<MailOutlined />}
+              styles={{ content: { color: colors.secondary } }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="With Phone"
+              value={contacts.filter((c) => c.phone).length}
+              prefix={<PhoneOutlined />}
+              styles={{ content: { color: colors.accent } }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-      <Table
-        dataSource={contacts}
-        columns={columns}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-      />
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Title level={4} style={{ margin: 0 }}>All Emergency Contacts</Title>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>
+            Add Contact
+          </Button>
+        </div>
+
+        <Table
+          dataSource={contacts}
+          columns={columns}
+          rowKey="_id"
+          loading={loading}
+          pagination={contacts.length > 10 ? { pageSize: 10, showSizeChanger: true, showTotal: (total) => `${total} contacts` } : false}
+        />
+      </Card>
 
       {modalOpen && (
         <Modal
@@ -191,6 +268,6 @@ export default function EmergencyContactSection() {
           </Form>
         </Modal>
       )}
-    </Card>
+    </div>
   );
 }

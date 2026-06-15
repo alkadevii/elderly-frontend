@@ -88,22 +88,6 @@ export default function CompleteProfilePage() {
     }
   };
 
-  if (pageLoading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background: colors.background,
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
     <>
       <style>
@@ -154,6 +138,7 @@ export default function CompleteProfilePage() {
               maxWidth: "95vw",
             }}
           >
+            <Spin spinning={pageLoading} size="large" description="Loading profile...">
             <Title
               level={2}
               style={{
@@ -236,6 +221,7 @@ export default function CompleteProfilePage() {
                 </Button>
               </motion.div>
             </Form>
+            </Spin>
           </Card>
         </motion.div>
       </div>

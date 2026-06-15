@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Layout,
   Menu,
@@ -10,6 +10,7 @@ import {
   Row,
   Col,
   Button,
+  Tag,
 } from "antd";
 
 import {
@@ -21,12 +22,18 @@ import {
   CalendarOutlined,
   PhoneOutlined,
   MedicineBoxOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 
 import { motion } from "framer-motion";
 
 import { colors } from "@/styles/theme";
 import type { User } from "@/types/User";
+import type { MedicalCondition } from "@/types/MedicalCondition";
+import type { EmergencyContact } from "@/types/EmergencyContact";
+import { getMedicalConditions } from "@/services/medicalConditionService";
+import { getEmergencyContacts } from "@/services/emergencyContactService";
 import AppointmentSection from "./AppointmentSection";
 import EmergencyContactSection from "./EmergencyContactSection";
 import MedicalConditionSection from "./MedicalConditionSection";
@@ -49,6 +56,24 @@ export default function UserDashboard({
   onLogout,
 }: Props) {
   const [activeKey, setActiveKey] = useState("1");
+  const [medicalConditions, setMedicalConditions] = useState<MedicalCondition[]>([]);
+  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [mcRes, ecRes] = await Promise.all([
+          getMedicalConditions(),
+          getEmergencyContacts(),
+        ]);
+        setMedicalConditions(Array.isArray(mcRes) ? mcRes : (mcRes.data || mcRes.conditions || []));
+        setEmergencyContacts(Array.isArray(ecRes) ? ecRes : (ecRes.data || ecRes.contacts || []));
+      } catch {
+        // silently fail, data is optional for overview
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   const renderContent = () => {
     switch (activeKey) {
@@ -74,6 +99,15 @@ export default function UserDashboard({
     }
   };
 
+  const severityColor = (s: string) => {
+    switch (s) {
+      case "mild": return "green";
+      case "moderate": return "orange";
+      case "severe": return "red";
+      default: return "default";
+    }
+  };
+
   const renderOverview = () => (
     <>
       <Title level={3} style={{ margin: 0 }}>
@@ -87,8 +121,11 @@ export default function UserDashboard({
             <Title level={2} style={{ marginBottom: 0 }}>
               Welcome Back, {user.name}
             </Title>
-            <Paragraph style={{ color: colors.textSecondary }}>
+            <Paragraph style={{ color: colors.textSecondary, marginBottom: 4 }}>
               {user.email}
+            </Paragraph>
+            <Paragraph style={{ color: colors.textSecondary, marginBottom: 0 }}>
+              {user.role === "admin" ? "Administrator" : "Member"}
             </Paragraph>
           </div>
         </div>
@@ -103,40 +140,98 @@ export default function UserDashboard({
         </Col>
         <Col span={6}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Title level={3}>{user.phone ? "\u2713" : "--"}</Title>
-            <Paragraph>Phone Added</Paragraph>
+            <Title level={3}>
+              {user.phone ? (
+                <CheckCircleOutlined style={{ color: "#10b981" }} />
+              ) : (
+                <CloseCircleOutlined style={{ color: "#cbd5e1" }} />
+              )}
+            </Title>
+            <Paragraph>Phone</Paragraph>
           </Card>
         </Col>
         <Col span={6}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Title level={3}>{user.emergencyContact ? "\u2713" : "--"}</Title>
-            <Paragraph>Emergency Contact</Paragraph>
+            <Title level={3}>{emergencyContacts.length}</Title>
+            <Paragraph>Emergency Contacts</Paragraph>
           </Card>
         </Col>
         <Col span={6}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Title level={3}>{user.medicalConditions ? "\u2713" : "--"}</Title>
-            <Paragraph>Medical Records</Paragraph>
+            <Title level={3}>{medicalConditions.length}</Title>
+            <Paragraph>Medical Conditions</Paragraph>
           </Card>
         </Col>
       </Row>
 
       <Row gutter={20}>
         <Col span={8}>
-          <Card title="Basic Information" style={{ borderRadius: 16, height: "100%" }}>
+          <Card
+            title={
+              <span><UserOutlined style={{ marginRight: 8 }} />Basic Information</span>
+            }
+            style={{ borderRadius: 16, height: "100%" }}
+          >
             <p><strong>Age:</strong> {user.age || "-"}</p>
             <p><strong>Phone:</strong> {user.phone || "-"}</p>
             <p><strong>Address:</strong> {user.address || "-"}</p>
           </Card>
         </Col>
         <Col span={8}>
-          <Card title="Emergency Contact" style={{ borderRadius: 16, height: "100%" }}>
-            <p>{user.emergencyContact || "Not Added"}</p>
+          <Card
+            title={
+              <span><PhoneOutlined style={{ marginRight: 8 }} />Emergency Contacts</span>
+            }
+            style={{ borderRadius: 16, height: "100%" }}
+          >
+            {emergencyContacts.length === 0 ? (
+              <Paragraph style={{ color: colors.textSecondary }}>
+                No emergency contacts added yet.
+              </Paragraph>
+            ) : (
+              <div>
+                {emergencyContacts.map((contact) => (
+                  <div
+                    key={contact._id}
+                    style={{ padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}
+                  >
+                    <Paragraph strong style={{ marginBottom: 4 }}>{contact.name}</Paragraph>
+                    <span>
+                      <Tag color="blue">{contact.relationship}</Tag>
+                      {contact.phone}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </Col>
         <Col span={8}>
-          <Card title="Medical Conditions" style={{ borderRadius: 16, height: "100%" }}>
-            <p>{user.medicalConditions || "No Medical Conditions Added"}</p>
+          <Card
+            title={
+              <span><HeartOutlined style={{ marginRight: 8 }} />Medical Conditions</span>
+            }
+            style={{ borderRadius: 16, height: "100%" }}
+          >
+            {medicalConditions.length === 0 ? (
+              <Paragraph style={{ color: colors.textSecondary }}>
+                No medical conditions recorded.
+              </Paragraph>
+            ) : (
+              <div>
+                {medicalConditions.map((condition) => (
+                  <div
+                    key={condition._id}
+                    style={{ padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}
+                  >
+                    <Paragraph strong style={{ marginBottom: 4 }}>{condition.conditionName}</Paragraph>
+                    <Tag style={{ textTransform: "capitalize" }} color={severityColor(condition.severity)}>
+                      {condition.severity}
+                    </Tag>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </Col>
       </Row>
@@ -222,7 +317,12 @@ export default function UserDashboard({
             }}
           >
             <Title level={3} style={{ margin: 0 }}>
-              Dashboard
+              {activeKey === "1" && "Dashboard"}
+              {activeKey === "2" && "Appointments"}
+              {activeKey === "3" && "Emergency Contacts"}
+              {activeKey === "4" && "Medical Conditions"}
+              {activeKey === "5" && "Medications"}
+              {activeKey === "6" && "Settings"}
             </Title>
             <Avatar size={50} src={user.profileImage} icon={<UserOutlined />} />
           </div>

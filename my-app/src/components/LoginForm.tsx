@@ -9,16 +9,19 @@ import {
   message,
 } from "antd";
 
+import {
+  MailOutlined,
+  LockOutlined,
+  LoginOutlined,
+} from "@ant-design/icons";
+
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { loginUser } from "@/services/authService";
 
-import {
-  colors,
-  buttonStyles,
-} from "@/styles/theme";
+import { colors, buttonStyles } from "@/styles/theme";
 
 const { Title, Paragraph } = Typography;
 
@@ -30,33 +33,19 @@ type LoginFormValues = {
 export default function LoginForm() {
   const router = useRouter();
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = async (
-    values: LoginFormValues
-  ) => {
+  const onFinish = async (values: LoginFormValues) => {
     setLoading(true);
 
     try {
       const data = await loginUser(values);
 
       if (data.user) {
-        // Save JWT Token
-        localStorage.setItem(
-          "token",
-          data.token
-        );
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Save User Info
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data.user)
-        );
-
-        message.success(
-          "Login successful"
-        );
+        message.success("Login successful");
 
         if (data.user.role === "admin") {
           router.push("/admin");
@@ -68,10 +57,7 @@ export default function LoginForm() {
       }
     } catch (error) {
       console.error(error);
-
-      message.error(
-        "Something went wrong"
-      );
+      message.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -79,43 +65,46 @@ export default function LoginForm() {
 
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 30,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.8,
-      }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
     >
       <Card
         style={{
-          width: 420,
+          width: 440,
           borderRadius: "24px",
-          background:
-            "rgba(255,255,255,0.82)",
-          backdropFilter: "blur(10px)",
-          border: "none",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.12)",
-          padding: "10px",
+          background: "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(16px)",
+          border: "1px solid rgba(255,255,255,0.6)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+          overflow: "hidden",
         }}
+        styles={{ body: { padding: "40px 36px" } }}
       >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "20px",
-          }}
-        >
+        {/* Logo / Icon Area */}
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "20px",
+              boxShadow: "0 8px 24px rgba(74,144,226,0.3)",
+            }}
+          >
+            <LoginOutlined style={{ fontSize: 30, color: colors.white }} />
+          </div>
+
           <Title
             level={2}
             style={{
-              color:
-                colors.textPrimary,
-              marginBottom: "8px",
+              color: colors.textPrimary,
+              marginBottom: "6px",
+              fontSize: "28px",
             }}
           >
             Welcome Back
@@ -123,86 +112,72 @@ export default function LoginForm() {
 
           <Paragraph
             style={{
-              color:
-                colors.textSecondary,
+              color: colors.textSecondary,
               marginBottom: 0,
+              fontSize: "15px",
             }}
           >
-            Login to continue using
-            Elder Care.
+            Sign in to your Elder Care account
           </Paragraph>
         </div>
 
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-        >
+        <Form layout="vertical" onFinish={onFinish} size="large">
           <Form.Item
-            label="Email"
             name="email"
             rules={[
-              {
-                required: true,
-                message:
-                  "Please enter your email",
-              },
+              { required: true, message: "Please enter your email" },
+              { type: "email", message: "Please enter a valid email" },
             ]}
           >
             <Input
-              size="large"
-              placeholder="Enter your email"
+              prefix={<MailOutlined style={{ color: colors.textSecondary }} />}
+              placeholder="Email address"
               style={{
-                borderRadius: "10px",
+                borderRadius: "12px",
+                height: 48,
               }}
             />
           </Form.Item>
 
           <Form.Item
-            label="Password"
             name="password"
-            rules={[
-              {
-                required: true,
-                message:
-                  "Please enter your password",
-              },
-            ]}
+            rules={[{ required: true, message: "Please enter your password" }]}
           >
             <Input.Password
-              size="large"
-              placeholder="Enter your password"
+              prefix={<LockOutlined style={{ color: colors.textSecondary }} />}
+              placeholder="Password"
               style={{
-                borderRadius: "10px",
+                borderRadius: "12px",
+                height: 48,
               }}
             />
           </Form.Item>
 
           <motion.div
-            whileHover={{
-              scale: 1.03,
-            }}
-            whileTap={{
-              scale: 0.98,
-            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Button
               htmlType="submit"
               block
               loading={loading}
               size="large"
+              icon={<LoginOutlined />}
               style={{
                 ...buttonStyles,
                 width: "100%",
-                background:
-                  colors.primary,
+                height: 52,
+                borderRadius: "14px",
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                 color: colors.white,
                 border: "none",
-                marginTop: "10px",
-                boxShadow:
-                  "0 8px 20px rgba(74,144,226,0.3)",
+                marginTop: "8px",
+                fontSize: "17px",
+                fontWeight: 600,
+                boxShadow: "0 8px 24px rgba(74,144,226,0.35)",
               }}
             >
-              Login
+              Sign In
             </Button>
           </motion.div>
         </Form>
@@ -210,25 +185,23 @@ export default function LoginForm() {
         <div
           style={{
             textAlign: "center",
-            marginTop: "20px",
-            color:
-              colors.textSecondary,
+            marginTop: "24px",
+            color: colors.textSecondary,
+            fontSize: "14px",
           }}
         >
           Don&apos;t have an account?{" "}
           <span
-            onClick={() =>
-              router.push(
-                "/register"
-              )
-            }
+            onClick={() => router.push("/register")}
             style={{
               color: colors.primary,
               cursor: "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
             }}
           >
-            Register
+            Create one
           </span>
         </div>
       </Card>

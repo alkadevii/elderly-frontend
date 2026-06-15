@@ -9,17 +9,20 @@ import {
   message,
 } from "antd";
 
+import {
+  UserOutlined,
+  MailOutlined,
+  LockOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
+
 import { motion } from "framer-motion";
 
 import { useRouter } from "next/navigation";
 
 import { registerUser } from "@/services/authService";
 
-import {
-  colors,
-  buttonStyles,
-  pageStyles,
-} from "@/styles/theme";
+import { colors, buttonStyles } from "@/styles/theme";
 
 const { Title, Paragraph } = Typography;
 
@@ -32,9 +35,7 @@ type RegisterFormValues = {
 export default function RegisterForm() {
   const router = useRouter();
 
-  const onFinish = async (
-    values: RegisterFormValues
-  ) => {
+  const onFinish = async (values: RegisterFormValues) => {
     try {
       const data = await registerUser({
         ...values,
@@ -42,63 +43,58 @@ export default function RegisterForm() {
       });
 
       if (data.user) {
-        message.success(
-          "Registration successful"
-        );
-
+        message.success("Registration successful");
         router.push("/login");
       } else {
         message.error(data.message);
       }
-    } catch (error) {
+    } catch {
       message.error("Something went wrong");
     }
   };
 
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 30,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration: 0.8,
-      }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
     >
       <Card
         style={{
-          width: 420,
-
+          width: 440,
           borderRadius: "24px",
-
-          background:
-            "rgba(255,255,255,0.82)",
-
-          backdropFilter: "blur(10px)",
-
-          border: "none",
-
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.12)",
-
-          padding: "10px",
+          background: "rgba(255,255,255,0.85)",
+          backdropFilter: "blur(16px)",
+          border: "1px solid rgba(255,255,255,0.6)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+          overflow: "hidden",
         }}
+        styles={{ body: { padding: "40px 36px" } }}
       >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "20px",
-          }}
-        >
+        {/* Logo / Icon Area */}
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              background: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "20px",
+              boxShadow: "0 8px 24px rgba(127,183,126,0.3)",
+            }}
+          >
+            <UserAddOutlined style={{ fontSize: 30, color: colors.white }} />
+          </div>
+
           <Title
             level={2}
             style={{
               color: colors.textPrimary,
-              marginBottom: "8px",
+              marginBottom: "6px",
+              fontSize: "28px",
             }}
           >
             Create Account
@@ -108,108 +104,86 @@ export default function RegisterForm() {
             style={{
               color: colors.textSecondary,
               marginBottom: 0,
+              fontSize: "15px",
             }}
           >
-            Join Elder Care and support
-            better living.
+            Join Elder Care and support better living
           </Paragraph>
         </div>
 
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-        >
+        <Form layout="vertical" onFinish={onFinish} size="large">
           <Form.Item
-            label="Name"
             name="name"
-            rules={[
-              {
-                required: true,
-                message:
-                  "Please enter your name",
-              },
-            ]}
+            rules={[{ required: true, message: "Please enter your name" }]}
           >
             <Input
-              size="large"
-              placeholder="Enter your name"
+              prefix={<UserOutlined style={{ color: colors.textSecondary }} />}
+              placeholder="Full name"
               style={{
-                borderRadius: "10px",
+                borderRadius: "12px",
+                height: 48,
               }}
             />
           </Form.Item>
 
           <Form.Item
-            label="Email"
             name="email"
             rules={[
-              {
-                required: true,
-                message:
-                  "Please enter your email",
-              },
+              { required: true, message: "Please enter your email" },
+              { type: "email", message: "Please enter a valid email" },
             ]}
           >
             <Input
-              size="large"
-              placeholder="Enter your email"
+              prefix={<MailOutlined style={{ color: colors.textSecondary }} />}
+              placeholder="Email address"
               style={{
-                borderRadius: "10px",
+                borderRadius: "12px",
+                height: 48,
               }}
             />
           </Form.Item>
 
           <Form.Item
-            label="Password"
             name="password"
             rules={[
-              {
-                required: true,
-                message:
-                  "Please enter your password",
-              },
+              { required: true, message: "Please enter your password" },
+              { min: 6, message: "Password must be at least 6 characters" },
             ]}
           >
             <Input.Password
-              size="large"
-              placeholder="Enter your password"
+              prefix={<LockOutlined style={{ color: colors.textSecondary }} />}
+              placeholder="Password"
               style={{
-                borderRadius: "10px",
+                borderRadius: "12px",
+                height: 48,
               }}
             />
           </Form.Item>
 
           <motion.div
-            whileHover={{
-              scale: 1.03,
-            }}
-            whileTap={{
-              scale: 0.98,
-            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Button
               htmlType="submit"
               block
               size="large"
+              icon={<UserAddOutlined />}
               style={{
                 ...buttonStyles,
-
                 width: "100%",
-
-                background:
-                  colors.primary,
-
+                height: 52,
+                borderRadius: "14px",
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                 color: colors.white,
-
                 border: "none",
-
-                marginTop: "10px",
-
-                boxShadow:
-                  "0 8px 20px rgba(74,144,226,0.3)",
+                marginTop: "8px",
+                fontSize: "17px",
+                fontWeight: 600,
+                boxShadow: "0 8px 24px rgba(74,144,226,0.35)",
               }}
             >
-              Register
+              Create Account
             </Button>
           </motion.div>
         </Form>
@@ -217,22 +191,23 @@ export default function RegisterForm() {
         <div
           style={{
             textAlign: "center",
-            marginTop: "20px",
+            marginTop: "24px",
             color: colors.textSecondary,
+            fontSize: "14px",
           }}
         >
           Already have an account?{" "}
           <span
-            onClick={() =>
-              router.push("/login")
-            }
+            onClick={() => router.push("/login")}
             style={{
               color: colors.primary,
               cursor: "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
             }}
           >
-            Login
+            Sign in
           </span>
         </div>
       </Card>

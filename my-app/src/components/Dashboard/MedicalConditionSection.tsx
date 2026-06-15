@@ -14,11 +14,17 @@ import {
   Card,
   Space,
   Typography,
+  Statistic,
+  Row,
+  Col,
+  Tag,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  HeartOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { MedicalCondition, MedicalConditionFormData } from "@/types/MedicalCondition";
@@ -28,6 +34,7 @@ import {
   updateMedicalCondition,
   deleteMedicalCondition,
 } from "@/services/medicalConditionService";
+import { colors } from "@/styles/theme";
 
 const { Title } = Typography;
 
@@ -125,8 +132,22 @@ export default function MedicalConditionSection() {
     }
   };
 
+  const severityColor = (s: string) => {
+    switch (s) {
+      case "mild": return "green";
+      case "moderate": return "orange";
+      case "severe": return "red";
+      default: return "default";
+    }
+  };
+
   const columns = [
-    { title: "Condition", dataIndex: "conditionName", key: "conditionName" },
+    {
+      title: "Condition",
+      dataIndex: "conditionName",
+      key: "conditionName",
+      render: (name: string) => <strong>{name}</strong>,
+    },
     {
       title: "Diagnosed",
       dataIndex: "diagnosedDate",
@@ -138,13 +159,20 @@ export default function MedicalConditionSection() {
       dataIndex: "severity",
       key: "severity",
       render: (s: string) => (
-        <span style={{ textTransform: "capitalize" }}>{s}</span>
+        <Tag style={{ textTransform: "capitalize" }} color={severityColor(s)}>{s}</Tag>
       ),
     },
-    { title: "Notes", dataIndex: "notes", key: "notes", render: (v: string) => v || "-" },
+    {
+      title: "Notes",
+      dataIndex: "notes",
+      key: "notes",
+      render: (v: string) => v || "-",
+      ellipsis: true,
+    },
     {
       title: "Actions",
       key: "actions",
+      width: 120,
       render: (_: unknown, record: MedicalCondition) => (
         <Space>
           <Button
@@ -172,21 +200,64 @@ export default function MedicalConditionSection() {
   };
 
   return (
-    <Card>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Medical Conditions</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>
-          Add Condition
-        </Button>
-      </div>
+    <div>
+      <Row gutter={20} style={{ marginBottom: 20 }}>
+        <Col span={6}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="Total Conditions"
+              value={conditions.length}
+              prefix={<HeartOutlined />}
+              styles={{ content: { color: colors.primary } }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="Mild"
+              value={conditions.filter((c) => c.severity === "mild").length}
+              styles={{ content: { color: "#10b981" } }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="Moderate"
+              value={conditions.filter((c) => c.severity === "moderate").length}
+              styles={{ content: { color: "#f59e0b" } }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card style={{ borderRadius: 16, textAlign: "center" }}>
+            <Statistic
+              title="Severe"
+              value={conditions.filter((c) => c.severity === "severe").length}
+              prefix={<ExclamationCircleOutlined />}
+              styles={{ content: { color: "#ef4444" } }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-      <Table
-        dataSource={conditions}
-        columns={columns}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-      />
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Title level={4} style={{ margin: 0 }}>All Medical Conditions</Title>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>
+            Add Condition
+          </Button>
+        </div>
+
+        <Table
+          dataSource={conditions}
+          columns={columns}
+          rowKey="_id"
+          loading={loading}
+          pagination={conditions.length > 10 ? { pageSize: 10, showSizeChanger: true, showTotal: (total) => `${total} conditions` } : false}
+        />
+      </Card>
 
       {modalOpen && (
         <Modal
@@ -227,6 +298,6 @@ export default function MedicalConditionSection() {
           </Form>
         </Modal>
       )}
-    </Card>
+    </div>
   );
 }
