@@ -79,10 +79,8 @@ export default function UserPage() {
         )
       }
       onLogout={() => {
-        localStorage.removeItem(
-          "token"
-        );
-
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         router.push("/login");
       }}
     />

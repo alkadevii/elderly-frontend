@@ -17,6 +17,8 @@ export type UpdateProfileData = {
   phone?: string;
   address?: string;
   profileImage?: string;
+  emergencyContact?: string;
+  medicalConditions?: string;
 };
 
 export const registerUser = async (

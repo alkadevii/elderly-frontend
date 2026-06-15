@@ -9,6 +9,9 @@ import {
   Typography,
   message,
   Spin,
+  Row,
+  Col,
+  Divider,
 } from "antd";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -43,7 +46,6 @@ export default function CompleteProfilePage() {
 
         const user = data.user;
 
-        // Wait for form to be ready before setting values
         if (form) {
           form.setFieldsValue({
             age: user.age || "",
@@ -107,15 +109,9 @@ export default function CompleteProfilePage() {
       <style>
         {`
           @keyframes gradientMove {
-            0% {
-              background-position: 0% 50%;
-            }
-            50% {
-              background-position: 100% 50%;
-            }
-            100% {
-              background-position: 0% 50%;
-            }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
           }
         `}
       </style>
@@ -146,26 +142,16 @@ export default function CompleteProfilePage() {
         />
 
         <motion.div
-          initial={{
-            opacity: 0,
-            y: 30,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.8,
-          }}
-          style={{
-            position: "relative",
-            zIndex: 1,
-          }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          style={{ position: "relative", zIndex: 1, padding: "20px 0" }}
         >
           <Card
             style={{
               ...pageStyles.card,
-              width: 650,
+              width: 750,
+              maxWidth: "95vw",
             }}
           >
             <Title
@@ -173,6 +159,7 @@ export default function CompleteProfilePage() {
               style={{
                 color: colors.textPrimary,
                 textAlign: "center",
+                marginBottom: 4,
               }}
             >
               Edit Profile
@@ -182,46 +169,55 @@ export default function CompleteProfilePage() {
               style={{
                 textAlign: "center",
                 color: colors.textSecondary,
-                marginBottom: 30,
+                marginBottom: 24,
               }}
             >
-              Update your personal, emergency and medical information anytime.
+              Update your personal, emergency, and medical information
             </Paragraph>
 
             <Form form={form} layout="vertical" onFinish={onFinish}>
-              <Form.Item label="Age" name="age">
-                <Input size="large" placeholder="Enter your age" />
-              </Form.Item>
+              <Title level={5} style={{ color: colors.primary, marginBottom: 16 }}>
+                Personal Information
+              </Title>
 
-              <Form.Item label="Phone Number" name="phone">
-                <Input size="large" placeholder="Enter phone number" />
-              </Form.Item>
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item label="Age" name="age">
+                    <Input size="large" placeholder="Enter your age" type="number" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item label="Phone Number" name="phone">
+                    <Input size="large" placeholder="Enter phone number" />
+                  </Form.Item>
+                </Col>
+              </Row>
 
               <Form.Item label="Address" name="address">
-                <Input size="large" placeholder="Enter address" />
+                <Input size="large" placeholder="Enter your full address" />
               </Form.Item>
 
+              <Divider style={{ margin: "8px 0 20px" }} />
+
+              <Title level={5} style={{ color: colors.primary, marginBottom: 16 }}>
+                Emergency & Medical
+              </Title>
+
               <Form.Item label="Emergency Contact" name="emergencyContact">
-                <Input
-                  size="large"
-                  placeholder="Emergency contact number"
-                />
+                <Input size="large" placeholder="Emergency contact name and number" />
               </Form.Item>
 
               <Form.Item label="Medical Conditions" name="medicalConditions">
                 <Input.TextArea
                   rows={4}
-                  placeholder="Mention any medical conditions"
+                  placeholder="List any medical conditions, allergies, or special notes"
                 />
               </Form.Item>
 
               <motion.div
-                whileHover={{
-                  scale: 1.02,
-                }}
-                whileTap={{
-                  scale: 0.98,
-                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ marginTop: 8 }}
               >
                 <Button
                   htmlType="submit"
