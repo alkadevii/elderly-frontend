@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import {
   Card,
   Form,
@@ -11,9 +10,7 @@ import {
   message,
   Spin,
 } from "antd";
-
 import { motion } from "framer-motion";
-
 import { useRouter } from "next/navigation";
 
 import {
@@ -33,16 +30,21 @@ const { Title, Paragraph } = Typography;
 export default function CompleteProfilePage() {
   const router = useRouter();
 
-  const [form] = Form.useForm();
-
-  const [loading, setLoading] =
-    useState(false);
-
+  const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] =
     useState(true);
 
   const [userId, setUserId] =
     useState("");
+
+  const [initialValues, setInitialValues] =
+    useState({
+      age: "",
+      phone: "",
+      address: "",
+      emergencyContact: "",
+      medicalConditions: "",
+    });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -59,7 +61,7 @@ export default function CompleteProfilePage() {
 
         setUserId(user.id);
 
-        form.setFieldsValue({
+        setInitialValues({
           age: user.age || "",
           phone: user.phone || "",
           address: user.address || "",
@@ -80,7 +82,7 @@ export default function CompleteProfilePage() {
     };
 
     fetchUser();
-  }, [router, form]);
+  }, [router]);
 
   const onFinish = async (
     values: UpdateProfileData
@@ -140,15 +142,9 @@ export default function CompleteProfilePage() {
       <style>
         {`
           @keyframes gradientMove {
-            0% {
-              background-position: 0% 50%;
-            }
-            50% {
-              background-position: 100% 50%;
-            }
-            100% {
-              background-position: 0% 50%;
-            }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
           }
         `}
       </style>
@@ -156,7 +152,6 @@ export default function CompleteProfilePage() {
       <div
         style={{
           ...pageStyles.heroContainer,
-
           backgroundImage: `
             linear-gradient(
               -45deg,
@@ -166,10 +161,7 @@ export default function CompleteProfilePage() {
               ${colors.accent}
             )
           `,
-
-          backgroundSize:
-            "400% 400%",
-
+          backgroundSize: "400% 400%",
           animation:
             "gradientMove 12s ease infinite",
         }}
@@ -233,48 +225,38 @@ export default function CompleteProfilePage() {
             </Paragraph>
 
             <Form
-              form={form}
               layout="vertical"
+              initialValues={
+                initialValues
+              }
               onFinish={onFinish}
             >
               <Form.Item
                 label="Age"
                 name="age"
               >
-                <Input
-                  size="large"
-                  placeholder="Enter your age"
-                />
+                <Input size="large" />
               </Form.Item>
 
               <Form.Item
                 label="Phone Number"
                 name="phone"
               >
-                <Input
-                  size="large"
-                  placeholder="Enter phone number"
-                />
+                <Input size="large" />
               </Form.Item>
 
               <Form.Item
                 label="Address"
                 name="address"
               >
-                <Input
-                  size="large"
-                  placeholder="Enter address"
-                />
+                <Input size="large" />
               </Form.Item>
 
               <Form.Item
                 label="Emergency Contact"
                 name="emergencyContact"
               >
-                <Input
-                  size="large"
-                  placeholder="Emergency contact number"
-                />
+                <Input size="large" />
               </Form.Item>
 
               <Form.Item
@@ -283,7 +265,6 @@ export default function CompleteProfilePage() {
               >
                 <Input.TextArea
                   rows={4}
-                  placeholder="Mention any medical conditions"
                 />
               </Form.Item>
 
@@ -307,8 +288,6 @@ export default function CompleteProfilePage() {
                     color:
                       colors.white,
                     border: "none",
-                    boxShadow:
-                      "0 8px 20px rgba(74,144,226,0.3)",
                   }}
                 >
                   Update Profile
