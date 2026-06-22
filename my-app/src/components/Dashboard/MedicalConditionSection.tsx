@@ -7,7 +7,6 @@ import {
   Modal,
   Form,
   Input,
-  Select,
   DatePicker,
   Popconfirm,
   message,
@@ -17,14 +16,12 @@ import {
   Statistic,
   Row,
   Col,
-  Tag,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   HeartOutlined,
-  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { MedicalCondition, MedicalConditionFormData } from "@/types/MedicalCondition";
@@ -106,11 +103,10 @@ export default function MedicalConditionSection() {
     setSubmitting(true);
     try {
       const payload: MedicalConditionFormData = {
-        conditionName: values.conditionName as string,
+        condition: values.condition as string,
         diagnosedDate: values.diagnosedDate
           ? dayjs(values.diagnosedDate as Parameters<typeof dayjs>[0]).format("YYYY-MM-DD")
           : undefined,
-        severity: values.severity as "mild" | "moderate" | "severe",
         notes: values.notes as string,
       };
 
@@ -132,20 +128,11 @@ export default function MedicalConditionSection() {
     }
   };
 
-  const severityColor = (s: string) => {
-    switch (s) {
-      case "mild": return "green";
-      case "moderate": return "orange";
-      case "severe": return "red";
-      default: return "default";
-    }
-  };
-
   const columns = [
     {
       title: "Condition",
-      dataIndex: "conditionName",
-      key: "conditionName",
+      dataIndex: "condition",
+      key: "condition",
       render: (name: string) => <strong>{name}</strong>,
     },
     {
@@ -153,14 +140,6 @@ export default function MedicalConditionSection() {
       dataIndex: "diagnosedDate",
       key: "diagnosedDate",
       render: (d: string) => (d ? dayjs(d).format("MMM D, YYYY") : "-"),
-    },
-    {
-      title: "Severity",
-      dataIndex: "severity",
-      key: "severity",
-      render: (s: string) => (
-        <Tag style={{ textTransform: "capitalize" }} color={severityColor(s)}>{s}</Tag>
-      ),
     },
     {
       title: "Notes",
@@ -202,7 +181,7 @@ export default function MedicalConditionSection() {
   return (
     <div>
       <Row gutter={20} style={{ marginBottom: 20 }}>
-        <Col span={6}>
+        <Col span={12}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
             <Statistic
               title="Total Conditions"
@@ -212,31 +191,13 @@ export default function MedicalConditionSection() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={12}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
             <Statistic
-              title="Mild"
-              value={conditions.filter((c) => c.severity === "mild").length}
-              styles={{ content: { color: "#10b981" } }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Statistic
-              title="Moderate"
-              value={conditions.filter((c) => c.severity === "moderate").length}
-              styles={{ content: { color: "#f59e0b" } }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Statistic
-              title="Severe"
-              value={conditions.filter((c) => c.severity === "severe").length}
-              prefix={<ExclamationCircleOutlined />}
-              styles={{ content: { color: "#ef4444" } }}
+              title="Diagnosed"
+              value={conditions.filter((c) => c.diagnosedDate).length}
+              prefix={<HeartOutlined />}
+              styles={{ content: { color: colors.secondary } }}
             />
           </Card>
         </Col>
@@ -273,18 +234,11 @@ export default function MedicalConditionSection() {
             onFinish={handleSubmit}
             style={{ marginTop: 16 }}
           >
-            <Form.Item name="conditionName" label="Condition Name" rules={[{ required: true, message: "Required" }]}>
+            <Form.Item name="condition" label="Condition" rules={[{ required: true, message: "Required" }]}>
               <Input placeholder="Diabetes / Hypertension" />
             </Form.Item>
             <Form.Item name="diagnosedDate" label="Diagnosed Date">
               <DatePicker style={{ width: "100%" }} />
-            </Form.Item>
-            <Form.Item name="severity" label="Severity" rules={[{ required: true, message: "Required" }]}>
-              <Select>
-                <Select.Option value="mild">Mild</Select.Option>
-                <Select.Option value="moderate">Moderate</Select.Option>
-                <Select.Option value="severe">Severe</Select.Option>
-              </Select>
             </Form.Item>
             <Form.Item name="notes" label="Notes">
               <Input.TextArea rows={3} />

@@ -1,5 +1,10 @@
-import { BASE_URL } from "./api";
-import type { AppointmentFormData } from "@/types/Appointment";
+import { BASE_URL, handleResponse } from "./api";
+import type {
+  AppointmentFormData,
+  AppointmentReviewData,
+  AppointmentConfirmData,
+  AppointmentFinalizeData,
+} from "@/types/Appointment";
 
 const getHeaders = () => {
   const token = localStorage.getItem("token");
@@ -9,35 +14,32 @@ const getHeaders = () => {
   };
 };
 
-export const getAppointments = async () => {
-  const response = await fetch(`${BASE_URL}/appointments`, {
+export const getAppointments = async (userId?: string) => {
+  const query = userId ? `?userId=${userId}` : "";
+  const response = await fetch(`${BASE_URL}/appointments${query}`, {
     headers: getHeaders(),
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || "Failed to fetch appointments");
-  return data;
+  return handleResponse(response);
 };
 
-export const createAppointment = async (data: AppointmentFormData) => {
+export const createAppointment = async (
+  data: AppointmentFormData & { userId?: string; reviewNotes?: string }
+) => {
   const response = await fetch(`${BASE_URL}/appointments`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to create appointment");
-  return json;
+  return handleResponse(response);
 };
 
-export const updateAppointment = async (id: string, data: AppointmentFormData) => {
+export const updateAppointment = async (id: string, data: Partial<AppointmentFormData> & { status?: string }) => {
   const response = await fetch(`${BASE_URL}/appointments/${id}`, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to update appointment");
-  return json;
+  return handleResponse(response);
 };
 
 export const deleteAppointment = async (id: string) => {
@@ -45,7 +47,32 @@ export const deleteAppointment = async (id: string) => {
     method: "DELETE",
     headers: getHeaders(),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to delete appointment");
-  return json;
+  return handleResponse(response);
+};
+
+export const reviewAppointment = async (id: string, data: AppointmentReviewData) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/review`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+};
+
+export const confirmAppointment = async (id: string, data: AppointmentConfirmData) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/confirm`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+};
+
+export const finalizeAppointment = async (id: string, data: AppointmentFinalizeData) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/finalize`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
 };

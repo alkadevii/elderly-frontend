@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { loginUser } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 
 import { colors, buttonStyles } from "@/styles/theme";
 
@@ -32,6 +33,7 @@ type LoginFormValues = {
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [loading, setLoading] = useState(false);
 
@@ -42,13 +44,14 @@ export default function LoginForm() {
       const data = await loginUser(values);
 
       if (data.user) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        login(data.token, data.user);
 
         message.success("Login successful");
 
         if (data.user.role === "admin") {
           router.push("/admin");
+        } else if (data.user.role === "staff") {
+          router.push("/staff");
         } else {
           router.push("/user");
         }
@@ -57,7 +60,12 @@ export default function LoginForm() {
       }
     } catch (error) {
       console.error(error);
-      message.error("Something went wrong");
+      const msg = error instanceof Error ? error.message : "";
+      if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("password") || msg.toLowerCase().includes("email") || msg.toLowerCase().includes("credentials") || msg.toLowerCase().includes("not found")) {
+        message.error("Invalid credentials");
+      } else {
+        message.error(msg || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }

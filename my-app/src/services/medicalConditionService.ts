@@ -1,4 +1,4 @@
-import { BASE_URL } from "./api";
+import { BASE_URL, handleResponse } from "./api";
 import type { MedicalConditionFormData } from "@/types/MedicalCondition";
 
 const getHeaders = () => {
@@ -9,24 +9,21 @@ const getHeaders = () => {
   };
 };
 
-export const getMedicalConditions = async () => {
-  const response = await fetch(`${BASE_URL}/medical-conditions`, {
+export const getMedicalConditions = async (userId?: string) => {
+  const query = userId ? `?userId=${userId}` : "";
+  const response = await fetch(`${BASE_URL}/medical-conditions${query}`, {
     headers: getHeaders(),
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || "Failed to fetch conditions");
-  return data;
+  return handleResponse(response);
 };
 
-export const createMedicalCondition = async (data: MedicalConditionFormData) => {
+export const createMedicalCondition = async (data: MedicalConditionFormData & { userId?: string }) => {
   const response = await fetch(`${BASE_URL}/medical-conditions`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to create condition");
-  return json;
+  return handleResponse(response);
 };
 
 export const updateMedicalCondition = async (id: string, data: MedicalConditionFormData) => {
@@ -35,9 +32,7 @@ export const updateMedicalCondition = async (id: string, data: MedicalConditionF
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to update condition");
-  return json;
+  return handleResponse(response);
 };
 
 export const deleteMedicalCondition = async (id: string) => {
@@ -45,7 +40,5 @@ export const deleteMedicalCondition = async (id: string) => {
     method: "DELETE",
     headers: getHeaders(),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to delete condition");
-  return json;
+  return handleResponse(response);
 };

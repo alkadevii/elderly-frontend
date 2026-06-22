@@ -4,22 +4,18 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Spin } from "antd";
 import { useAuth } from "@/context/AuthContext";
-import UserDashboard from "@/components/Dashboard/UserDashboard";
+import StaffDashboard from "@/components/Staff/StaffDashboard";
 import { colors } from "@/styles/theme";
 
-export default function UserPage() {
-  const { user, loading, logout, refreshUser } = useAuth();
+export default function StaffPage() {
+  const { user, role, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
-
-  useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && (!user || role !== "staff")) {
       router.push("/login");
     }
-  }, [loading, user, router]);
+  }, [loading, user, role, router]);
 
   if (loading) {
     return (
@@ -29,12 +25,7 @@ export default function UserPage() {
     );
   }
 
-  if (!user) return null;
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
+  if (!user || role !== "staff") return null;
 
   return (
     <div
@@ -43,18 +34,13 @@ export default function UserPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: `linear-gradient(-45deg, ${colors.primary}, ${colors.secondary}, ${colors.background}, ${colors.accent})`,
+        background: `linear-gradient(-45deg, ${colors.secondary}, ${colors.primary}, ${colors.background}, ${colors.accent})`,
         backgroundSize: "400% 400%",
         animation: "gradientMove 12s ease infinite",
         padding: "20px",
       }}
     >
-      <UserDashboard
-        user={user}
-        profileCompleted={user.profileCompleted}
-        onCompleteProfile={() => router.push("/complete-profile")}
-        onLogout={handleLogout}
-      />
+      <StaffDashboard />
     </div>
   );
 }

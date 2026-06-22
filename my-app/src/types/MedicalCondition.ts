@@ -1,14 +1,12 @@
 export type MedicalCondition = {
   _id: string;
-  conditionName: string;
+  condition: string;
   diagnosedDate?: string;
-  severity: "mild" | "moderate" | "severe";
   notes?: string;
 };
 
 export type MedicalConditionFormData = {
-  conditionName: string;
+  condition: string;
   diagnosedDate?: string;
-  severity: "mild" | "moderate" | "severe";
   notes?: string;
 };

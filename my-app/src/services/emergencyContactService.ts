@@ -1,4 +1,4 @@
-import { BASE_URL } from "./api";
+import { BASE_URL, handleResponse } from "./api";
 import type { EmergencyContactFormData } from "@/types/EmergencyContact";
 
 const getHeaders = () => {
@@ -9,26 +9,23 @@ const getHeaders = () => {
   };
 };
 
-export const getEmergencyContacts = async () => {
-  const response = await fetch(`${BASE_URL}/emergency-contacts`, {
+export const getEmergencyContacts = async (userId?: string) => {
+  const query = userId ? `?userId=${userId}` : "";
+  const response = await fetch(`${BASE_URL}/emergency-contacts${query}`, {
     headers: getHeaders(),
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || "Failed to fetch contacts");
-  return data;
+  return handleResponse(response);
 };
 
 export const createEmergencyContact = async (
-  data: EmergencyContactFormData,
+  data: EmergencyContactFormData & { userId?: string },
 ) => {
   const response = await fetch(`${BASE_URL}/emergency-contacts`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to create contact");
-  return json;
+  return handleResponse(response);
 };
 
 export const updateEmergencyContact = async (
@@ -40,9 +37,7 @@ export const updateEmergencyContact = async (
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to update contact");
-  return json;
+  return handleResponse(response);
 };
 
 export const deleteEmergencyContact = async (id: string) => {
@@ -50,7 +45,5 @@ export const deleteEmergencyContact = async (id: string) => {
     method: "DELETE",
     headers: getHeaders(),
   });
-  const json = await response.json();
-  if (!response.ok) throw new Error(json.message || "Failed to delete contact");
-  return json;
+  return handleResponse(response);
 };

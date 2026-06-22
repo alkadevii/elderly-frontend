@@ -1,4 +1,4 @@
-import { BASE_URL } from "./api";
+import { BASE_URL, handleResponse } from "./api";
 
 export type RegisterData = {
   name: string;
@@ -13,12 +13,14 @@ export type LoginData = {
 };
 
 export type UpdateProfileData = {
-  age?: number;
+  profileImage?: string;
+  dateOfBirth?: string;
+  gender?: "male" | "female" | "other";
+  bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+  identificationMark?: string;
   phone?: string;
   address?: string;
-  profileImage?: string;
-  emergencyContact?: string;
-  medicalConditions?: string;
+  emergencyNotes?: string;
 };
 
 export const registerUser = async (
@@ -36,7 +38,7 @@ export const registerUser = async (
     }
   );
 
-  return response.json();
+  return handleResponse(response);
 };
 
 export const loginUser = async (
@@ -54,7 +56,7 @@ export const loginUser = async (
     }
   );
 
-  return response.json();
+  return handleResponse(response);
 };
 
 export const getCurrentUser =
@@ -71,7 +73,7 @@ export const getCurrentUser =
       }
     );
 
-    return response.json();
+    return handleResponse(response);
   };
 
 export const updateProfile =
@@ -96,5 +98,5 @@ export const updateProfile =
       }
     );
 
-    return response.json();
+    return handleResponse(response);
   };

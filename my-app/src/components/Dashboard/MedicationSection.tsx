@@ -98,7 +98,7 @@ export default function MedicationSection() {
     setSubmitting(true);
     try {
       const payload: MedicationFormData = {
-        name: values.name as string,
+        medicineName: values.medicineName as string,
         dosage: values.dosage as string,
         frequency: values.frequency as string,
         startDate: values.startDate
@@ -107,7 +107,6 @@ export default function MedicationSection() {
         endDate: values.endDate
           ? dayjs(values.endDate as Parameters<typeof dayjs>[0]).format("YYYY-MM-DD")
           : undefined,
-        notes: values.notes as string,
       };
 
       if (editingMedication) {
@@ -129,7 +128,12 @@ export default function MedicationSection() {
   };
 
   const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
+    {
+      title: "Medicine Name",
+      dataIndex: "medicineName",
+      key: "medicineName",
+      render: (name: string) => <strong>{name}</strong>,
+    },
     { title: "Dosage", dataIndex: "dosage", key: "dosage" },
     { title: "Frequency", dataIndex: "frequency", key: "frequency" },
     {
@@ -147,6 +151,7 @@ export default function MedicationSection() {
     {
       title: "Actions",
       key: "actions",
+      width: 120,
       render: (_: unknown, record: Medication) => (
         <Space>
           <Button
@@ -188,7 +193,7 @@ export default function MedicationSection() {
         columns={columns}
         rowKey="_id"
         loading={loading}
-        pagination={{ pageSize: 5 }}
+        pagination={{ pageSize: 10, showSizeChanger: true }}
       />
 
       {modalOpen && (
@@ -205,7 +210,7 @@ export default function MedicationSection() {
             onFinish={handleSubmit}
             style={{ marginTop: 16 }}
           >
-            <Form.Item name="name" label="Medication Name" rules={[{ required: true, message: "Required" }]}>
+            <Form.Item name="medicineName" label="Medicine Name" rules={[{ required: true, message: "Required" }]}>
               <Input placeholder="Aspirin / Metformin" />
             </Form.Item>
             <Form.Item name="dosage" label="Dosage" rules={[{ required: true, message: "Required" }]}>
@@ -219,9 +224,6 @@ export default function MedicationSection() {
             </Form.Item>
             <Form.Item name="endDate" label="End Date">
               <DatePicker style={{ width: "100%" }} />
-            </Form.Item>
-            <Form.Item name="notes" label="Notes">
-              <Input.TextArea rows={3} />
             </Form.Item>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <Button onClick={() => setModalOpen(false)}>Cancel</Button>

@@ -1,6 +1,12 @@
-import RegisterForm from "@/components/RegisterForm";
+"use client";
+
+import dynamic from "next/dynamic";
 
 import { colors } from "@/styles/theme";
+
+const RegisterForm = dynamic(() => import("@/components/RegisterForm"), {
+  ssr: false,
+});
 
 export default function RegisterPage() {
   return (
