@@ -3,6 +3,7 @@ export type Medication = {
   medicineName: string;
   dosage: string;
   frequency: string;
+  scheduleTimes: string[];
   startDate: string;
   endDate?: string;
 };
@@ -11,6 +12,7 @@ export type MedicationFormData = {
   medicineName: string;
   dosage: string;
   frequency: string;
+  scheduleTimes: string[];
   startDate: string;
   endDate?: string;
 };

@@ -66,24 +66,33 @@ import {
 import {
   getMedications,
 } from "@/services/medicationService";
+import {
+  approveCancellation,
+  rejectCancellation,
+  closeAppointment,
+} from "@/services/appointmentService";
+import VitalsSection from "@/components/Dashboard/VitalsSection";
+
 import dayjs from "dayjs";
-import { notifyAppointmentChanges } from "@/utils/appointmentNotifications";
 
 const { Sider, Content } = Layout;
 const { Title, Paragraph } = Typography;
 
-const statusColors: Record<AppointmentStatus, string> = {
+const statusColors: Record<string, string> = {
   pending: "blue",
   pending_confirmation: "orange",
   user_confirmed: "purple",
   approved: "green",
   scheduled: "cyan",
+  awaiting_feedback: "orange",
+  feedback_provided: "geekblue",
   completed: "default",
   cancelled: "red",
   rejected: "red",
+  cancellation_requested: "volcano",
 };
 
-const formatStatus = (s: AppointmentStatus) =>
+const formatStatus = (s: string) =>
   s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function StaffDashboard() {
@@ -108,21 +117,22 @@ export default function StaffDashboard() {
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewingAppointment, setReviewingAppointment] = useState<Appointment | null>(null);
-  const [reviewStatus, setReviewStatus] = useState<"approved" | "rejected">("approved");
+  const [reviewStatus, setReviewStatus] = useState<"scheduled" | "rejected">("scheduled");
   const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewTokenNumber, setReviewTokenNumber] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const [proposeModalOpen, setProposeModalOpen] = useState(false);
   const [proposingForUserId, setProposingForUserId] = useState<string | null>(null);
   const [proposeSubmitting, setProposeSubmitting] = useState(false);
   const [proposeForm] = Form.useForm();
+  const [replacingAppointment, setReplacingAppointment] = useState<Appointment | null>(null);
 
   const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
   const [finalizingAppointment, setFinalizingAppointment] = useState<Appointment | null>(null);
   const [finalizeSubmitting, setFinalizeSubmitting] = useState(false);
   const [finalizeForm] = Form.useForm();
 
-  const prevAllAppointmentsRef = useRef<Appointment[]>([]);
   const assignedUsersRef = useRef<User[]>([]);
 
   const fetchAllAppointments = async (users: User[]): Promise<Appointment[]> => {
@@ -146,9 +156,10 @@ export default function StaffDashboard() {
     setPendingLoading(true);
     try {
       const all = await fetchAllAppointments(users);
-      prevAllAppointmentsRef.current = all;
       setPendingAppointments(
-        all.filter((a: Appointment) => a.status === "pending" || a.status === "user_confirmed")
+        all.filter((a: Appointment) =>
+          ["pending", "user_confirmed", "cancellation_requested", "feedback_provided"].includes(a.status)
+        )
       );
     } catch {
     } finally {
@@ -180,10 +191,10 @@ export default function StaffDashboard() {
       try {
         const all = await fetchAllAppointments(assignedUsersRef.current);
         if (!cancelled) {
-          notifyAppointmentChanges(prevAllAppointmentsRef.current, all, "staff");
-          prevAllAppointmentsRef.current = all;
           setPendingAppointments(
-            all.filter((a: Appointment) => a.status === "pending" || a.status === "user_confirmed")
+            all.filter((a: Appointment) =>
+              ["pending", "user_confirmed", "cancellation_requested", "feedback_provided"].includes(a.status)
+            )
           );
         }
       } catch {
@@ -224,10 +235,11 @@ export default function StaffDashboard() {
     }
   };
 
-  const openReview = (appointment: Appointment, status: "approved" | "rejected") => {
+  const openReview = (appointment: Appointment, status: "scheduled" | "rejected") => {
     setReviewingAppointment(appointment);
     setReviewStatus(status);
     setReviewNotes("");
+    setReviewTokenNumber("");
     setReviewModalOpen(true);
   };
 
@@ -237,11 +249,16 @@ export default function StaffDashboard() {
       message.warning("Please provide a reason for rejection");
       return;
     }
+    if (reviewStatus === "scheduled" && !reviewTokenNumber.trim()) {
+      message.warning("Token number is required to schedule the appointment");
+      return;
+    }
     setReviewSubmitting(true);
     try {
       const res = await reviewAppointment(reviewingAppointment._id, {
         status: reviewStatus,
         reviewNotes: reviewNotes.trim() || undefined,
+        tokenNumber: reviewStatus === "scheduled" ? reviewTokenNumber.trim() : undefined,
       });
       message.success(`Appointment ${res.appointment?.status || reviewStatus}`);
       setReviewModalOpen(false);
@@ -273,6 +290,9 @@ export default function StaffDashboard() {
       return;
     }
     setProposingForUserId(userId);
+    setReplacingAppointment(
+      appointment && appointment.status !== "rejected" ? appointment : null
+    );
     if (hospitals.length === 0) {
       getHospitals(true)
         .then((res) => {
@@ -296,6 +316,13 @@ export default function StaffDashboard() {
     if (!proposingForUserId) return;
     setProposeSubmitting(true);
     try {
+      const replacing = replacingAppointment;
+      if (replacing) {
+        await reviewAppointment(replacing._id, {
+          status: "rejected",
+          reviewNotes: `Replaced by a new proposal — ${(values.reviewNotes as string) || "no longer needed"}`,
+        }).catch(() => {});
+      }
       const payload = {
         userId: proposingForUserId,
         doctorName: values.doctorName as string,
@@ -307,7 +334,12 @@ export default function StaffDashboard() {
         reviewNotes: (values.reviewNotes as string) || undefined,
       };
       await createAppointment(payload);
-      message.success("Appointment proposed to user - awaiting confirmation");
+      message.success(
+        replacing
+          ? "Previous appointment rejected & new proposal sent to user"
+          : "Appointment proposed to user - awaiting confirmation"
+      );
+      setReplacingAppointment(null);
       setProposeModalOpen(false);
       if (selectedUser) selectUser(selectedUser);
       fetchPendingAppointments(assignedUsers);
@@ -419,7 +451,7 @@ export default function StaffDashboard() {
                   title: "Status",
                   dataIndex: "status",
                   key: "status",
-                  render: (s: AppointmentStatus, record: Appointment) => (
+                  render: (s: string, record: Appointment) => (
                     <Space size="small" orientation="vertical" style={{ gap: 4 }}>
                       <Tag color={statusColors[s] || "default"}>{formatStatus(s)}</Tag>
                       {s === "scheduled" && (
@@ -438,6 +470,8 @@ export default function StaffDashboard() {
                     if (record.finalNotes) notes.push(record.finalNotes);
                     if (record.reviewNotes) notes.push(record.reviewNotes);
                     if (record.confirmationNotes) notes.push(`User: ${record.confirmationNotes}`);
+                    if (record.feedbackNotes) notes.push(`Feedback: ${record.feedbackNotes}`);
+                    if (record.cancelledBy) notes.push(`Cancelled by: ${record.cancelledBy}`);
                     if (notes.length === 0) return <span style={{ color: colors.textSecondary }}>-</span>;
                     return (
                       <div style={{ fontSize: 12, color: colors.textSecondary }}>
@@ -455,7 +489,7 @@ export default function StaffDashboard() {
                   render: (_: unknown, record: Appointment) =>
                     record.status === "pending" ? (
                       <Space>
-                        <Button type="primary" size="small" onClick={() => openReview(record, "approved")}>
+                        <Button type="primary" size="small" onClick={() => openReview(record, "scheduled")}>
                           Approve
                         </Button>
                         <Button danger size="small" onClick={() => openReview(record, "rejected")}>
@@ -467,6 +501,43 @@ export default function StaffDashboard() {
                     ) : record.status === "user_confirmed" ? (
                       <Button type="primary" size="small" onClick={() => openFinalize(record)}>
                         Finalize with hospital
+                      </Button>
+                    ) : record.status === "cancellation_requested" ? (
+                      <Space>
+                        <Button type="primary" size="small" onClick={async () => {
+                          try {
+                            await approveCancellation(record._id);
+                            message.success("Cancellation approved");
+                            if (selectedUser) selectUser(selectedUser);
+                          } catch (err) {
+                            message.error((err as Error)?.message || "Failed to approve cancellation");
+                          }
+                        }}>
+                          Approve Cancel
+                        </Button>
+                        <Button size="small" onClick={async () => {
+                          try {
+                            await rejectCancellation(record._id);
+                            message.success("Cancellation rejected");
+                            if (selectedUser) selectUser(selectedUser);
+                          } catch (err) {
+                            message.error((err as Error)?.message || "Failed to reject cancellation");
+                          }
+                        }}>
+                          Reject Cancel
+                        </Button>
+                      </Space>
+                    ) : record.status === "feedback_provided" ? (
+                      <Button type="primary" size="small" onClick={async () => {
+                        try {
+                          await closeAppointment(record._id);
+                          message.success("Appointment closed");
+                          if (selectedUser) selectUser(selectedUser);
+                        } catch (err) {
+                          message.error((err as Error)?.message || "Failed to close appointment");
+                        }
+                      }}>
+                        Close
                       </Button>
                     ) : (
                       <span style={{ color: colors.textSecondary }}>-</span>
@@ -532,6 +603,10 @@ export default function StaffDashboard() {
               ]}
             />
           </Card>
+
+          <div style={{ marginTop: 24 }}>
+            <VitalsSection userId={selectedUser?._id || selectedUser?.id} />
+          </div>
         </div>
       )}
     </div>
@@ -563,7 +638,7 @@ export default function StaffDashboard() {
               </Col>
               <Col span={6}>
                 <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Pending Requests" value={pendingAppointments.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: "#0891b2" } }} />
+                  <Statistic title="Pending Requests" value={pendingAppointments.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: pendingAppointments.length > 0 ? "#ef4444" : colors.textSecondary } }} />
                 </Card>
               </Col>
             </Row>
@@ -661,7 +736,7 @@ export default function StaffDashboard() {
                           <Space wrap>
                             {record.status === "pending" ? (
                               <>
-                                <Button type="primary" size="small" onClick={() => openReview(record, "approved")}>
+                                <Button type="primary" size="small" onClick={() => openReview(record, "scheduled")}>
                                   Approve
                                 </Button>
                                 <Button danger size="small" onClick={() => openReview(record, "rejected")}>
@@ -674,6 +749,43 @@ export default function StaffDashboard() {
                             ) : record.status === "user_confirmed" ? (
                               <Button type="primary" size="small" onClick={() => openFinalize(record)}>
                                 Finalize with hospital
+                              </Button>
+                            ) : record.status === "cancellation_requested" ? (
+                              <>
+                                <Button type="primary" size="small" onClick={async () => {
+                                  try {
+                                    await approveCancellation(record._id);
+                                    message.success("Cancellation approved");
+                                    fetchPendingAppointments(assignedUsers);
+                                  } catch (err) {
+                                    message.error((err as Error)?.message || "Failed to approve cancellation");
+                                  }
+                                }}>
+                                  Approve Cancel
+                                </Button>
+                                <Button size="small" onClick={async () => {
+                                  try {
+                                    await rejectCancellation(record._id);
+                                    message.success("Cancellation rejected");
+                                    fetchPendingAppointments(assignedUsers);
+                                  } catch (err) {
+                                    message.error((err as Error)?.message || "Failed to reject cancellation");
+                                  }
+                                }}>
+                                  Reject Cancel
+                                </Button>
+                              </>
+                            ) : record.status === "feedback_provided" ? (
+                              <Button type="primary" size="small" onClick={async () => {
+                                try {
+                                  await closeAppointment(record._id);
+                                  message.success("Appointment closed");
+                                  fetchPendingAppointments(assignedUsers);
+                                } catch (err) {
+                                  message.error((err as Error)?.message || "Failed to close appointment");
+                                }
+                              }}>
+                                Close
                               </Button>
                             ) : null}
                             {u && (
@@ -742,7 +854,7 @@ export default function StaffDashboard() {
                 items={[
                   { key: "1", icon: <HomeOutlined />, label: "Dashboard" },
                   { key: "2", icon: <TeamOutlined />, label: `Assigned Users (${assignedUsers.length})` },
-                  { key: "3", icon: <ClockCircleOutlined />, label: `Pending Requests (${pendingAppointments.length})` },
+                  { key: "3", icon: <ClockCircleOutlined />, label: <span>Pending Requests {pendingAppointments.length > 0 ? <span style={{ color: "#ef4444", fontWeight: 600 }}>({pendingAppointments.length})</span> : `(${pendingAppointments.length})`}</span> },
                 ]}
               />
             </div>
@@ -774,12 +886,12 @@ export default function StaffDashboard() {
       </Layout>
 
       <Modal
-        title={reviewStatus === "approved" ? "Approve Appointment" : "Reject Appointment"}
+        title={reviewStatus === "scheduled" ? "Approve & Schedule Appointment" : "Reject Appointment"}
         open={reviewModalOpen}
         onCancel={() => setReviewModalOpen(false)}
         onOk={submitReview}
         confirmLoading={reviewSubmitting}
-        okText={reviewStatus === "approved" ? "Approve" : "Reject"}
+        okText={reviewStatus === "scheduled" ? "Approve" : "Reject"}
         okButtonProps={reviewStatus === "rejected" ? { danger: true } : undefined}
         destroyOnHidden
       >
@@ -793,8 +905,17 @@ export default function StaffDashboard() {
           </div>
         )}
         <Form layout="vertical">
+          {reviewStatus === "scheduled" && (
+            <Form.Item label="Token number" required>
+              <Input
+                value={reviewTokenNumber}
+                onChange={(e) => setReviewTokenNumber(e.target.value)}
+                placeholder="e.g. TK-045"
+              />
+            </Form.Item>
+          )}
           <Form.Item
-            label={reviewStatus === "approved" ? "Token number / instructions" : "Reason for rejection"}
+            label={reviewStatus === "scheduled" ? "Instructions (optional)" : "Reason for rejection"}
             required={reviewStatus === "rejected"}
           >
             <Input.TextArea
@@ -802,8 +923,8 @@ export default function StaffDashboard() {
               value={reviewNotes}
               onChange={(e) => setReviewNotes(e.target.value)}
               placeholder={
-                reviewStatus === "approved"
-                  ? "e.g. Token #45. Please arrive 15 min early."
+                reviewStatus === "scheduled"
+                  ? "e.g. Please arrive 15 min early. Bring previous reports."
                   : "Explain why this appointment is being rejected"
               }
             />
@@ -814,10 +935,29 @@ export default function StaffDashboard() {
       <Modal
         title="Propose New Appointment"
         open={proposeModalOpen}
-        onCancel={() => setProposeModalOpen(false)}
+        onCancel={() => {
+          setReplacingAppointment(null);
+          setProposeModalOpen(false);
+        }}
         footer={null}
         destroyOnHidden
       >
+        {replacingAppointment && (
+          <Paragraph
+            style={{
+              color: "#ef4444",
+              marginBottom: 12,
+              padding: 8,
+              background: "#fef2f2",
+              borderRadius: 8,
+              fontSize: 13,
+            }}
+          >
+            The previous appointment with{" "}
+            <strong>{replacingAppointment.doctorName}</strong> will be
+            automatically rejected when you send this proposal.
+          </Paragraph>
+        )}
         <Paragraph style={{ color: colors.textSecondary, marginBottom: 16 }}>
           The patient will see this as a proposal and can accept or decline it.
         </Paragraph>

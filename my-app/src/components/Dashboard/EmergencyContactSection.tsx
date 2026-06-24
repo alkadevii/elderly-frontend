@@ -17,6 +17,7 @@ import {
   Col,
   Tag,
 } from "antd";
+import PhoneInput from "@/components/common/PhoneInput";
 import {
   PlusOutlined,
   EditOutlined,
@@ -254,7 +255,7 @@ export default function EmergencyContactSection() {
               <Input placeholder="Son / Daughter / Friend" />
             </Form.Item>
             <Form.Item name="phone" label="Phone" rules={[{ required: true, message: "Required" }]}>
-              <Input placeholder="+1 234 567 890" />
+              <PhoneInput placeholder="Phone number" />
             </Form.Item>
             <Form.Item name="email" label="Email">
               <Input placeholder="email@example.com" />

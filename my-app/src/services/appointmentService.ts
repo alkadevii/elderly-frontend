@@ -4,6 +4,8 @@ import type {
   AppointmentReviewData,
   AppointmentConfirmData,
   AppointmentFinalizeData,
+  AppointmentFeedbackData,
+  AppointmentCancelData,
 } from "@/types/Appointment";
 
 const getHeaders = () => {
@@ -73,6 +75,48 @@ export const finalizeAppointment = async (id: string, data: AppointmentFinalizeD
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+};
+
+export const submitFeedback = async (id: string, data: AppointmentFeedbackData) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/feedback`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+};
+
+export const closeAppointment = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/close`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const cancelAppointment = async (id: string, data?: AppointmentCancelData) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/cancel`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: data ? JSON.stringify(data) : undefined,
+  });
+  return handleResponse(response);
+};
+
+export const approveCancellation = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/approve-cancellation`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const rejectCancellation = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/appointments/${id}/reject-cancellation`, {
+    method: "PUT",
+    headers: getHeaders(),
   });
   return handleResponse(response);
 };

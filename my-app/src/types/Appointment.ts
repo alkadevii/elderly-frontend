@@ -4,9 +4,14 @@ export type AppointmentStatus =
   | "user_confirmed"
   | "approved"
   | "scheduled"
+  | "awaiting_feedback"
+  | "feedback_provided"
   | "completed"
   | "cancelled"
-  | "rejected";
+  | "rejected"
+  | "cancellation_requested";
+
+export type CancelledBy = "user" | "staff" | "admin";
 
 export type Appointment = {
   _id: string;
@@ -15,6 +20,7 @@ export type Appointment = {
   appointmentDate: string;
   reason: string;
   status: AppointmentStatus;
+  previousStatus?: AppointmentStatus;
   user?: {
     _id: string;
     name: string;
@@ -43,6 +49,15 @@ export type Appointment = {
     email: string;
   } | null;
   finalizedAt?: string | null;
+  feedbackNotes?: string;
+  feedbackProvidedAt?: string;
+  completedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+  completedAt?: string | null;
+  cancelledBy?: CancelledBy;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -55,8 +70,9 @@ export type AppointmentFormData = {
 };
 
 export type AppointmentReviewData = {
-  status: "approved" | "rejected";
+  status: "scheduled" | "rejected";
   reviewNotes?: string;
+  tokenNumber?: string;
 };
 
 export type AppointmentConfirmData = {
@@ -68,4 +84,12 @@ export type AppointmentFinalizeData = {
   tokenNumber: string;
   appointmentDate?: string;
   finalNotes?: string;
+};
+
+export type AppointmentFeedbackData = {
+  feedbackNotes: string;
+};
+
+export type AppointmentCancelData = {
+  reason?: string;
 };

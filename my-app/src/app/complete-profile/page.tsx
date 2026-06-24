@@ -16,6 +16,7 @@ import {
   Divider,
   Avatar,
 } from "antd";
+import PhoneInput from "@/components/common/PhoneInput";
 import { UserOutlined, UploadOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -316,7 +317,7 @@ export default function CompleteProfilePage() {
                 </Col>
                 <Col xs={24} sm={12}>
                   <Form.Item label="Phone Number" name="phone">
-                    <Input size="large" placeholder="Enter phone number" />
+                    <PhoneInput />
                   </Form.Item>
                 </Col>
               </Row>

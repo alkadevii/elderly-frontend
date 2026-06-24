@@ -42,6 +42,7 @@ import {
   PhoneOutlined,
   HeartOutlined,
   MedicineBoxOutlined,
+
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -68,10 +69,12 @@ import {
   updateHospital,
   deleteHospital,
 } from "@/services/hospitalService";
-import { getAppointments } from "@/services/appointmentService";
+import { getAppointments, approveCancellation, rejectCancellation, closeAppointment } from "@/services/appointmentService";
+import PhoneInput from "@/components/common/PhoneInput";
 import { getMedicalConditions } from "@/services/medicalConditionService";
 import { getMedications } from "@/services/medicationService";
 import { getEmergencyContacts } from "@/services/emergencyContactService";
+
 
 const { Sider, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -502,7 +505,7 @@ export default function AdminDashboard() {
               </Col>
               <Col span={6}>
                 <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Pending Profiles" value={pendingProfiles.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: "#f59e0b" } }} />
+                  <Statistic title="Pending Profiles" value={pendingProfiles.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: pendingProfiles.length > 0 ? "#ef4444" : colors.textSecondary } }} />
                 </Card>
               </Col>
               <Col span={6}>
@@ -671,6 +674,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
         );
+
       default:
         return null;
     }
@@ -722,10 +726,11 @@ export default function AdminDashboard() {
                 items={[
                   { key: "1", icon: <HomeOutlined />, label: "Dashboard" },
                   { key: "2", icon: <TeamOutlined />, label: "Users" },
-                  { key: "5", icon: <ClockCircleOutlined />, label: `Pending Profiles (${pendingProfiles.length})` },
+                  { key: "5", icon: <ClockCircleOutlined />, label: <span>Pending Profiles {pendingProfiles.length > 0 ? <span style={{ color: "#ef4444", fontWeight: 600 }}>({pendingProfiles.length})</span> : `(${pendingProfiles.length})`}</span> },
                   { key: "6", icon: <UserSwitchOutlined />, label: `Unassigned Users (${unassignedUsers.length})` },
                   { key: "3", icon: <BankOutlined />, label: "Hospitals" },
                   { key: "4", icon: <UserAddOutlined />, label: "Staff" },
+
                 ]}
               />
             </div>
@@ -744,6 +749,7 @@ export default function AdminDashboard() {
               {activeKey === "4" && "Staff Management"}
               {activeKey === "5" && "Pending Profiles"}
               {activeKey === "6" && "Unassigned Users"}
+
             </Title>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Tag color="red">Admin</Tag>
@@ -857,7 +863,7 @@ export default function AdminDashboard() {
             <Input placeholder="Address" />
           </Form.Item>
           <Form.Item name="phone" label="Phone">
-            <Input placeholder="Phone" />
+            <PhoneInput placeholder="Hospital phone" />
           </Form.Item>
           <Form.Item name="email" label="Email">
             <Input placeholder="Email" />
@@ -998,7 +1004,15 @@ export default function AdminDashboard() {
                       { title: "Reason", dataIndex: "reason", key: "reason", ellipsis: true },
                       {
                         title: "Status", dataIndex: "status", key: "status",
-                        render: (s: string) => <Tag color={s === "pending" ? "blue" : s === "pending_confirmation" ? "orange" : s === "user_confirmed" ? "purple" : s === "approved" ? "green" : s === "scheduled" ? "cyan" : s === "completed" ? "default" : "red"}>{s.replace(/_/g, " ")}</Tag>,
+                        render: (s: string) => {
+                          const colors: Record<string, string> = {
+                            pending: "blue", pending_confirmation: "orange", user_confirmed: "purple",
+                            approved: "green", scheduled: "cyan", awaiting_feedback: "orange",
+                            feedback_provided: "geekblue", completed: "default", cancelled: "red",
+                            rejected: "red", cancellation_requested: "volcano",
+                          };
+                          return <Tag color={colors[s] || "default"}>{s.replace(/_/g, " ")}</Tag>;
+                        },
                       },
                     ]}
                   />

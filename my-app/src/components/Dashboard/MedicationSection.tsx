@@ -8,16 +8,19 @@ import {
   Form,
   Input,
   DatePicker,
+  TimePicker,
   Popconfirm,
   message,
   Card,
   Space,
   Typography,
+  Tag,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  MinusCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { Medication, MedicationFormData } from "@/types/Medication";
@@ -36,6 +39,7 @@ export default function MedicationSection() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scheduleTimes, setScheduleTimes] = useState<string[]>([""]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -76,11 +80,17 @@ export default function MedicationSection() {
 
   const openAdd = () => {
     setEditingMedication(null);
+    setScheduleTimes([""]);
     setModalOpen(true);
   };
 
   const openEdit = (record: Medication) => {
     setEditingMedication(record);
+    setScheduleTimes(
+      record.scheduleTimes && record.scheduleTimes.length > 0
+        ? record.scheduleTimes
+        : [""]
+    );
     setModalOpen(true);
   };
 
@@ -94,13 +104,36 @@ export default function MedicationSection() {
     }
   };
 
+  const addScheduleTime = () => {
+    setScheduleTimes((prev) => [...prev, ""]);
+  };
+
+  const removeScheduleTime = (index: number) => {
+    setScheduleTimes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateScheduleTime = (index: number, value: string) => {
+    setScheduleTimes((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
+
   const handleSubmit = async (values: Record<string, unknown>) => {
+    const filteredTimes = scheduleTimes.filter((t) => t.trim());
+    if (filteredTimes.length === 0) {
+      message.warning("At least one schedule time is required");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload: MedicationFormData = {
         medicineName: values.medicineName as string,
         dosage: values.dosage as string,
         frequency: values.frequency as string,
+        scheduleTimes: filteredTimes,
         startDate: values.startDate
           ? dayjs(values.startDate as Parameters<typeof dayjs>[0]).format("YYYY-MM-DD")
           : "",
@@ -136,6 +169,15 @@ export default function MedicationSection() {
     },
     { title: "Dosage", dataIndex: "dosage", key: "dosage" },
     { title: "Frequency", dataIndex: "frequency", key: "frequency" },
+    {
+      title: "Schedule Times",
+      dataIndex: "scheduleTimes",
+      key: "scheduleTimes",
+      render: (times: string[]) =>
+        times && times.length > 0
+          ? times.map((t) => <Tag key={t}>{t}</Tag>)
+          : "-",
+    },
     {
       title: "Start Date",
       dataIndex: "startDate",
@@ -203,6 +245,7 @@ export default function MedicationSection() {
           onCancel={() => setModalOpen(false)}
           confirmLoading={submitting}
           footer={null}
+          width={520}
         >
           <Form
             layout="vertical"
@@ -219,12 +262,42 @@ export default function MedicationSection() {
             <Form.Item name="frequency" label="Frequency" rules={[{ required: true, message: "Required" }]}>
               <Input placeholder="Twice daily / Once daily" />
             </Form.Item>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", marginBottom: 4, fontWeight: 500, fontSize: 14 }}>Schedule Times *</label>
+              {scheduleTimes.map((time, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <TimePicker
+                    format="HH:mm"
+                    value={time ? dayjs(time, "HH:mm") : null}
+                    onChange={(d) =>
+                      updateScheduleTime(i, d ? d.format("HH:mm") : "")
+                    }
+                    style={{ flex: 1 }}
+                    placeholder="HH:mm"
+                  />
+                  {scheduleTimes.length > 1 && (
+                    <Button
+                      type="text"
+                      danger
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => removeScheduleTime(i)}
+                    />
+                  )}
+                </div>
+              ))}
+              <Button type="dashed" size="small" onClick={addScheduleTime}>
+                + Add Time
+              </Button>
+            </div>
+
             <Form.Item name="startDate" label="Start Date" rules={[{ required: true, message: "Required" }]}>
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
             <Form.Item name="endDate" label="End Date">
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
+
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <Button onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={submitting}>

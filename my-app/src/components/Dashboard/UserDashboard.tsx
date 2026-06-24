@@ -30,6 +30,8 @@ import {
   SolutionOutlined,
   SafetyCertificateOutlined,
   BellOutlined,
+  DashboardOutlined,
+
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
@@ -45,6 +47,8 @@ import AppointmentSection from "./AppointmentSection";
 import EmergencyContactSection from "./EmergencyContactSection";
 import MedicalConditionSection from "./MedicalConditionSection";
 import MedicationSection from "./MedicationSection";
+import VitalsSection from "./VitalsSection";
+
 
 const { Sider, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -153,6 +157,13 @@ export default function UserDashboard({
             <MedicineBoxOutlined style={{ color: colors.primary }} />,
             "Manage your prescribed medications."
           );
+        case "6":
+          return renderLockedFeature(
+            "Vitals",
+            <DashboardOutlined style={{ color: colors.primary }} />,
+            "Log and track your vital signs over time."
+          );
+
         default:
           return renderSetupGuide();
       }
@@ -169,6 +180,9 @@ export default function UserDashboard({
         return <MedicalConditionSection />;
       case "5":
         return <MedicationSection />;
+      case "6":
+        return <VitalsSection />;
+
       default:
         return renderOverview();
     }
@@ -412,12 +426,20 @@ export default function UserDashboard({
     );
   };
 
+  const pendingConfirmationCount = appointments.filter(
+    (a) => a.status === "pending_confirmation"
+  ).length;
+
   const menuItems = [
     { key: "1", icon: <HomeOutlined />, label: "Dashboard" },
     {
       key: "2",
       icon: isFullyVerified ? <CalendarOutlined /> : <LockOutlined />,
-      label: "Appointments",
+      label: (
+        <span style={pendingConfirmationCount > 0 ? { color: "#ef4444", fontWeight: 600 } : undefined}>
+          Appointments{pendingConfirmationCount > 0 ? ` (${pendingConfirmationCount})` : ""}
+        </span>
+      ),
       disabled: !isFullyVerified,
     },
     {
@@ -438,6 +460,13 @@ export default function UserDashboard({
       label: "Medications",
       disabled: !isFullyVerified,
     },
+    {
+      key: "6",
+      icon: isFullyVerified ? <DashboardOutlined /> : <LockOutlined />,
+      label: "Vitals",
+      disabled: !isFullyVerified,
+    },
+
   ];
 
   const getHeading = () => {
@@ -447,6 +476,8 @@ export default function UserDashboard({
       "3": "Emergency Contacts",
       "4": "Medical Conditions",
       "5": "Medications",
+      "6": "Vitals",
+
     };
     return labels[activeKey] || "";
   };
