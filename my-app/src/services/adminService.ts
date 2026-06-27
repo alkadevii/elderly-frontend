@@ -67,3 +67,17 @@ export const getAssignedUsers = async () => {
   });
   return handleResponse(response);
 };
+
+export const getStaffDashboard = async () => {
+  const response = await fetch(`${BASE_URL}/staff/dashboard`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};
+
+export const getStaffPerformance = async () => {
+  const response = await fetch(`${BASE_URL}/staff/performance`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+};

@@ -22,6 +22,8 @@ import {
   Input,
   DatePicker,
   Select,
+  Progress,
+  Rate,
 } from "antd";
 import {
   UserOutlined,
@@ -37,6 +39,8 @@ import {
   ArrowLeftOutlined,
   EyeOutlined,
   ClockCircleOutlined,
+  HistoryOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -48,13 +52,17 @@ import type { EmergencyContact } from "@/types/EmergencyContact";
 import type { MedicalCondition } from "@/types/MedicalCondition";
 import type { Medication } from "@/types/Medication";
 import type { Hospital } from "@/types/Hospital";
-import { getAssignedUsers } from "@/services/adminService";
+import type { StaffDashboardData } from "@/types/StaffDashboard";
+import { getAssignedUsers, getStaffDashboard } from "@/services/adminService";
 import {
   getAppointments,
   updateAppointment,
   reviewAppointment,
   createAppointment,
   finalizeAppointment,
+  approveCancellation,
+  rejectCancellation,
+  closeAppointment,
 } from "@/services/appointmentService";
 import { getHospitals } from "@/services/hospitalService";
 import {
@@ -66,12 +74,9 @@ import {
 import {
   getMedications,
 } from "@/services/medicationService";
-import {
-  approveCancellation,
-  rejectCancellation,
-  closeAppointment,
-} from "@/services/appointmentService";
 import VitalsSection from "@/components/Dashboard/VitalsSection";
+import type { StaffRating } from "@/types/Review";
+import { getReviews, getStaffRating } from "@/services/reviewService";
 
 import dayjs from "dayjs";
 
@@ -112,6 +117,9 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(false);
   const [resourceLoading, setResourceLoading] = useState(false);
   const [pendingLoading, setPendingLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<StaffDashboardData | null>(null);
+  const [myRating, setMyRating] = useState<StaffRating | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
 
@@ -172,12 +180,28 @@ export default function StaffDashboard() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getAssignedUsers();
+        const [dashboardRes, assignedRes] = await Promise.all([
+          getStaffDashboard(),
+          getAssignedUsers(),
+        ]);
         if (!cancelled) {
-          const list = Array.isArray(res) ? res : [];
+          const data = dashboardRes.data || dashboardRes;
+          setDashboardData(data);
+          const list = Array.isArray(assignedRes) ? assignedRes : [];
           setAssignedUsers(list);
           assignedUsersRef.current = list;
-          fetchPendingAppointments(list);
+          setPendingAppointments(
+            list.length > 0
+              ? (data.pendingActions?.pendingReview > 0 ||
+                data.pendingActions?.awaitingFeedback > 0 ||
+                data.pendingActions?.feedbackToClose > 0 ||
+                data.pendingActions?.cancellationRequests > 0)
+                ? (await fetchAllAppointments(list)).filter((a: Appointment) =>
+                    ["pending", "user_confirmed", "cancellation_requested", "feedback_provided"].includes(a.status)
+                  )
+                : []
+              : []
+          );
         }
       } catch {
       } finally {
@@ -185,27 +209,25 @@ export default function StaffDashboard() {
       }
     };
     load();
-
-    const interval = setInterval(async () => {
-      if (cancelled) return;
-      try {
-        const all = await fetchAllAppointments(assignedUsersRef.current);
-        if (!cancelled) {
-          setPendingAppointments(
-            all.filter((a: Appointment) =>
-              ["pending", "user_confirmed", "cancellation_requested", "feedback_provided"].includes(a.status)
-            )
-          );
-        }
-      } catch {
-      }
-    }, 30000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (!user?._id) return;
+    let cancelled = false;
+    const load = async () => {
+      setRatingLoading(true);
+      try {
+        const res = await getStaffRating(user._id);
+        if (!cancelled) setMyRating(res.data || res);
+      } catch {
+      } finally {
+        if (!cancelled) setRatingLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [user?._id]);
 
   const handleMenuClick = (key: string) => {
     setActiveKey(key);
@@ -620,28 +642,184 @@ export default function StaffDashboard() {
         return (
           <div>
             <Title level={3} style={{ marginTop: 0 }}>Staff Dashboard</Title>
-            <Row gutter={20} style={{ marginBottom: 24 }}>
-              <Col span={6}>
-                <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Assigned Users" value={assignedUsers.length} prefix={<TeamOutlined />} styles={{ content: { color: colors.primary } }} />
+
+            {/* Row 1: My Activity */}
+            <Card style={{ borderRadius: 16, marginBottom: 20 }} size="small">
+              <Row gutter={[16, 16]}>
+                <Col xs={12} sm={6}>
+                  <Card style={{ borderRadius: 12, textAlign: "center", background: "#f0f7ff" }} size="small">
+                    <Statistic title="Proposed" value={dashboardData?.myActivity?.appointmentsProposed ?? 0} prefix={<CalendarOutlined />} />
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Card style={{ borderRadius: 12, textAlign: "center", background: "#f0fdf4" }} size="small">
+                    <Statistic title="Reviewed" value={dashboardData?.myActivity?.appointmentsReviewed ?? 0} prefix={<EyeOutlined />} />
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Card style={{ borderRadius: 12, textAlign: "center", background: "#fffbeb" }} size="small">
+                    <Statistic title="Finalized" value={dashboardData?.myActivity?.appointmentsFinalized ?? 0} prefix={<CheckCircleOutlined />} />
+                  </Card>
+                </Col>
+                <Col xs={12} sm={6}>
+                  <Card style={{ borderRadius: 12, textAlign: "center", background: "#fef2f2" }} size="small">
+                    <Statistic title="Closed" value={dashboardData?.myActivity?.appointmentsClosed ?? 0} prefix={<ClockCircleOutlined />} />
+                  </Card>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* Row 2: Resolution Rate + Pending */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+              <Col xs={24} md={12}>
+                <Card style={{ borderRadius: 16 }} size="small">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <Typography.Text strong>Resolution Rate</Typography.Text>
+                    <Typography.Text strong style={{ fontSize: 20, color: (dashboardData?.appointmentStats?.resolutionRate ?? 0) >= 70 ? "#10b981" : "#ef4444" }}>
+                      {dashboardData?.appointmentStats?.resolutionRate ?? 0}%
+                    </Typography.Text>
+                  </div>
+                  <Progress
+                    percent={dashboardData?.appointmentStats?.resolutionRate ?? 0}
+                    strokeColor={(dashboardData?.appointmentStats?.resolutionRate ?? 0) >= 70 ? "#10b981" : "#ef4444"}
+                    railColor="#f0f0f0"
+                    size="small"
+                    showInfo={false}
+                  />
+                  <div style={{ marginTop: 4, fontSize: 12, color: colors.textSecondary }}>
+                    {dashboardData?.appointmentStats?.resolved ?? 0} resolved / {dashboardData?.appointmentStats?.nonCancelled ?? 0} non-cancelled
+                  </div>
                 </Card>
               </Col>
-              <Col span={6}>
-                <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Verified" value={assignedUsers.filter((u) => u.verificationStatus === "verified").length} prefix={<CheckCircleOutlined />} styles={{ content: { color: "#10b981" } }} />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Pending Verification" value={assignedUsers.filter((u) => u.verificationStatus === "pending").length} prefix={<CloseCircleOutlined />} styles={{ content: { color: "#f59e0b" } }} />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card style={{ borderRadius: 16, textAlign: "center" }}>
-                  <Statistic title="Pending Requests" value={pendingAppointments.length} prefix={<ClockCircleOutlined />} styles={{ content: { color: pendingAppointments.length > 0 ? "#ef4444" : colors.textSecondary } }} />
+              <Col xs={24} md={12}>
+                <Card style={{ borderRadius: 16, textAlign: "center" }} size="small">
+                  <Space>
+                    <ClockCircleOutlined style={{ color: "#ef4444", fontSize: 18 }} />
+                    <Typography.Text strong style={{ fontSize: 18, color: "#ef4444" }}>
+                    {(dashboardData?.pendingActions?.pendingReview ?? 0) +
+                       (dashboardData?.pendingActions?.awaitingFeedback ?? 0) +
+                       (dashboardData?.pendingActions?.feedbackToClose ?? 0) +
+                       (dashboardData?.pendingActions?.cancellationRequests ?? 0)}
+                    </Typography.Text>
+                    <Typography.Text>Pending Actions</Typography.Text>
+                  </Space>
+                  <div style={{ marginTop: 6, display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+                    {dashboardData?.pendingActions?.pendingReview ? <Tag color="red">{dashboardData.pendingActions.pendingReview} to review</Tag> : null}
+                    {dashboardData?.pendingActions?.awaitingFeedback ? <Tag color="orange">{dashboardData.pendingActions.awaitingFeedback} awaiting feedback</Tag> : null}
+                    {dashboardData?.pendingActions?.feedbackToClose ? <Tag color="blue">{dashboardData.pendingActions.feedbackToClose} to close</Tag> : null}
+                    {dashboardData?.pendingActions?.cancellationRequests ? <Tag color="volcano">{dashboardData.pendingActions.cancellationRequests} cancellations</Tag> : null}
+                  </div>
                 </Card>
               </Col>
             </Row>
+
+            {/* Row 3: Today's Schedule */}
+            <Card
+              title={<span><CalendarOutlined style={{ marginRight: 8 }} />Today's Schedule ({dashboardData?.todaySchedule?.total ?? 0})</span>}
+              style={{ borderRadius: 16, marginBottom: 20 }}
+              size="small"
+            >
+              {dashboardData?.todaySchedule?.appointments?.length ? (
+                dashboardData.todaySchedule.appointments.map((appt) => (
+                  <div key={appt._id} style={{ padding: "8px 0", borderBottom: "1px solid #f5f5f5", display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: colors.primary, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                      <Typography.Text strong style={{ fontSize: 13 }}>
+                        {appt.appointmentDate ? dayjs(appt.appointmentDate).format("h:mm A") : "—"}
+                      </Typography.Text>
+                      <span style={{ margin: "0 8px", color: colors.textSecondary }}>—</span>
+                      <Typography.Text style={{ fontSize: 13 }}>{appt.user?.name || "Unknown"}</Typography.Text>
+                      <span style={{ margin: "0 8px", color: colors.textSecondary }}>—</span>
+                      <Typography.Text style={{ fontSize: 13, color: colors.textSecondary }}>{appt.doctorName}</Typography.Text>
+                      {appt.tokenNumber && (
+                        <Tag color="blue" style={{ marginLeft: 8, fontSize: 10 }}>Token #{appt.tokenNumber}</Tag>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <Paragraph style={{ color: colors.textSecondary, margin: 0, fontSize: 13 }}>No appointments scheduled today.</Paragraph>
+              )}
+            </Card>
+
+            {/* Row 4: Assigned Users */}
+            <Card
+              title={<span><TeamOutlined style={{ marginRight: 8 }} />Assigned Users ({dashboardData?.assignedUsers?.total ?? assignedUsers.length})</span>}
+              style={{ borderRadius: 16 }}
+              size="small"
+            >
+              {(dashboardData?.assignedUsers?.list || assignedUsers).length > 0 ? (
+                (dashboardData?.assignedUsers?.list || assignedUsers).map((u) => (
+                  <div key={u._id || u.id} style={{ padding: "10px 0", borderBottom: "1px solid #f5f5f5", display: "flex", alignItems: "center", gap: 12 }}>
+                    <Avatar size={36} icon={<UserOutlined />} style={{ flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Typography.Text strong style={{ fontSize: 13 }}>{u.name}</Typography.Text>
+                        <Tag color={u.verificationStatus === "verified" ? "green" : u.verificationStatus === "rejected" ? "red" : "orange"} style={{ fontSize: 10 }}>
+                          {u.verificationStatus === "verified" ? "Verified" : u.verificationStatus || "Pending"}
+                        </Tag>
+                      </div>
+                      <div style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                        {u.bloodGroup && <span>{u.bloodGroup}  |  </span>}
+                        {u.phone && <span>{u.phone}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <Paragraph style={{ color: colors.textSecondary, margin: 0, fontSize: 13 }}>No users assigned yet.</Paragraph>
+              )}
+            </Card>
+
+            {/* My Feedback */}
+            <Card
+              title={<span><StarOutlined style={{ marginRight: 8 }} />My Feedback</span>}
+              style={{ borderRadius: 16, marginTop: 20 }}
+              size="small"
+              loading={ratingLoading}
+            >
+              {myRating ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 32, fontWeight: 700, color: "#faad14" }}>{myRating.averageRating.toFixed(1)}</div>
+                      <Rate disabled value={Math.round(myRating.averageRating)} style={{ fontSize: 14 }} />
+                      <div style={{ fontSize: 12, color: colors.textSecondary }}>{myRating.totalReviews} reviews</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const key = `${star}star` as keyof typeof myRating.breakdown;
+                        const count = myRating.breakdown?.[key] || 0;
+                        const pct = myRating.totalReviews > 0 ? Math.round((count / myRating.totalReviews) * 100) : 0;
+                        return (
+                          <div key={star} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                            <span style={{ fontSize: 12, width: 30 }}>{star}★</span>
+                            <Progress percent={pct} showInfo={false} size="small" strokeColor="#faad14" style={{ flex: 1, margin: 0 }} />
+                            <span style={{ fontSize: 11, width: 20, textAlign: "right" }}>{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {myRating.reviews && myRating.reviews.slice(0, 3).map((r) => (
+                    <div key={r._id} style={{ padding: "8px 0", borderTop: "1px solid #f5f5f5" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <Space>
+                          <Typography.Text style={{ fontSize: 12 }}>{r.user?.name || "Unknown"}</Typography.Text>
+                          <Rate disabled value={r.rating} style={{ fontSize: 11 }} />
+                        </Space>
+                        <Typography.Text style={{ fontSize: 11, color: colors.textSecondary }}>
+                          {dayjs(r.createdAt).format("MMM D")}
+                        </Typography.Text>
+                      </div>
+                      {r.comments && <Typography.Text style={{ fontSize: 12, display: "block", marginTop: 2 }}>"{r.comments}"</Typography.Text>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Paragraph style={{ color: colors.textSecondary, margin: 0, fontSize: 13 }}>No feedback yet.</Paragraph>
+              )}
+            </Card>
           </div>
         );
       case "2":

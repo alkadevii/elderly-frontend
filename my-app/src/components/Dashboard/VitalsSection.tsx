@@ -19,6 +19,7 @@ import {
   Statistic,
   Empty,
   Tag,
+  Pagination,
 } from "antd";
 import {
   PlusOutlined,
@@ -72,6 +73,7 @@ export default function VitalsSection({ userId }: Props) {
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [rangesModalOpen, setRangesModalOpen] = useState(false);
+  const [rangesPage, setRangesPage] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [type, setType] = useState<VitalType>("blood_pressure");
   const [ranges, setRanges] = useState<VitalRangesResponse[]>([]);
@@ -108,13 +110,19 @@ export default function VitalsSection({ userId }: Props) {
       try {
         const [vitalsRes, rangesRes] = await Promise.all([
           getVitals({ userId }),
-          getVitalRanges().catch(() => null),
+          getVitalRanges().catch((err) => {
+            console.error("Failed to load vital ranges", err);
+            return null;
+          }),
         ]);
         if (!cancelled) {
           const list = Array.isArray(vitalsRes) ? vitalsRes : [];
           setVitals(list);
-          const rangesData = Array.isArray(rangesRes) ? rangesRes : [];
-          setRanges(rangesData as VitalRangesResponse[]);
+          const rangesData = Array.isArray(rangesRes)
+            ? rangesRes
+            : (rangesRes?.data || rangesRes?.ranges || []);
+          const filtered = (rangesData as VitalRangesResponse[]).filter((r) => r.ranges?.length > 0);
+          setRanges(filtered);
         }
       } catch {
         if (!cancelled) message.error("Failed to load vitals");
@@ -490,7 +498,7 @@ export default function VitalsSection({ userId }: Props) {
       <Modal
         title="Vital Reference Ranges"
         open={rangesModalOpen}
-        onCancel={() => setRangesModalOpen(false)}
+        onCancel={() => { setRangesModalOpen(false); setRangesPage(1); }}
         footer={null}
         width={600}
       >
@@ -500,32 +508,47 @@ export default function VitalsSection({ userId }: Props) {
           </Paragraph>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {ranges.map((r) => (
-              <Card key={r.type} size="small" title={labelFor(r.type)} style={{ borderRadius: 12 }}>
-                {r.ranges.map((range) => (
-                  <div
-                    key={range.status}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "6px 0",
-                      borderBottom: "1px solid #f0f0f0",
-                    }}
-                  >
-                    <Space>
-                      <Tag color={assessmentColor(range.status)} style={{ minWidth: 60, textAlign: "center" }}>
-                        {range.label}
-                      </Tag>
-                      <span style={{ color: "#555", fontSize: 13, fontWeight: 500 }}>
-                        {range.display}
-                      </span>
-                    </Space>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{r.unit}</Text>
-                  </div>
-                ))}
-              </Card>
-            ))}
+            {(() => {
+              const idx = rangesPage - 1;
+              const r = ranges[idx];
+              if (!r) return null;
+              return (
+                <Card key={r.type} size="small" title={labelFor(r.type)} style={{ borderRadius: 12 }}>
+                  {r.ranges.map((range) => (
+                    <div
+                      key={range.status}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "6px 0",
+                        borderBottom: "1px solid #f0f0f0",
+                      }}
+                    >
+                      <Space>
+                        <Tag color={assessmentColor(range.status)} style={{ minWidth: 60, textAlign: "center" }}>
+                          {range.label}
+                        </Tag>
+                        <span style={{ color: "#555", fontSize: 13, fontWeight: 500 }}>
+                          {range.display}
+                        </span>
+                      </Space>
+                      <Text type="secondary" style={{ fontSize: 12 }}>{r.unit}</Text>
+                    </div>
+                  ))}
+                </Card>
+              );
+            })()}
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+              <Pagination
+                current={rangesPage}
+                total={ranges.length}
+                pageSize={1}
+                onChange={(p) => setRangesPage(p)}
+                showSizeChanger={false}
+                showTotal={(t) => `${labelFor(ranges[rangesPage - 1]?.type || "")}`}
+              />
+            </div>
           </div>
         )}
       </Modal>

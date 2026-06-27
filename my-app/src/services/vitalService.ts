@@ -59,9 +59,48 @@ export const deleteVital = async (id: string) => {
   return handleResponse(response);
 };
 
+function formatRangeDisplay(range: Record<string, unknown>): string {
+  const sMin = range.systolicMin as number | undefined;
+  const sMax = range.systolicMax as number | undefined;
+  const dMin = range.diastolicMin as number | undefined;
+  const dMax = range.diastolicMax as number | undefined;
+  const min = range.min as number | undefined;
+  const max = range.max as number | undefined;
+
+  if (sMin !== undefined || sMax !== undefined || dMin !== undefined || dMax !== undefined) {
+    const s = sMin !== undefined ? `≥ ${sMin}` : sMax !== undefined ? `≤ ${sMax}` : "--";
+    const d = dMin !== undefined ? `≥ ${dMin}` : dMax !== undefined ? `≤ ${dMax}` : "--";
+    return `${s} / ${d}`;
+  }
+  if (min !== undefined && max !== undefined) return `${min}–${max}`;
+  if (min !== undefined) return `≥ ${min}`;
+  if (max !== undefined) return `≤ ${max}`;
+  return "--";
+}
+
 export const getVitalRanges = async () => {
   const response = await fetch(`${BASE_URL}/vitals/ranges`, {
     headers: getHeaders(),
   });
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  // API returns an object keyed by vital type, convert to array with display strings
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    return Object.entries(data)
+      .filter(([, value]) => {
+        const entry = value as { ranges?: unknown[] };
+        return (entry.ranges || []).length > 0;
+      })
+      .map(([type, value]) => {
+        const entry = value as { unit?: string; ranges?: Record<string, unknown>[] };
+        return {
+          type,
+          unit: entry.unit || "",
+          ranges: (entry.ranges || []).map((r) => ({
+            ...r,
+            display: formatRangeDisplay(r),
+          })),
+        };
+      });
+  }
+  return data;
 };

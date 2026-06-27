@@ -48,6 +48,7 @@ import EmergencyContactSection from "./EmergencyContactSection";
 import MedicalConditionSection from "./MedicalConditionSection";
 import MedicationSection from "./MedicationSection";
 import VitalsSection from "./VitalsSection";
+import UserFeedbackSection from "./UserFeedbackSection";
 
 
 const { Sider, Content } = Layout;
@@ -290,6 +291,10 @@ export default function UserDashboard({
           </div>
         </div>
       </Card>
+
+      <div style={{ marginBottom: 24 }}>
+        <UserFeedbackSection />
+      </div>
 
       {upcomingAppointments.length > 0 && (
         <Card
