@@ -35,6 +35,7 @@ export default function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
 
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   const onFinish = async (values: LoginFormValues) => {
@@ -59,10 +60,14 @@ export default function LoginForm() {
         message.error(data.message);
       }
     } catch (error) {
-      console.error(error);
       const msg = error instanceof Error ? error.message : "";
       if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("password") || msg.toLowerCase().includes("email") || msg.toLowerCase().includes("credentials") || msg.toLowerCase().includes("not found")) {
-        message.error("Invalid credentials");
+        form.setFields([
+          {
+            name: "email",
+            errors: ["Invalid email or password"],
+          },
+        ]);
       } else {
         message.error(msg || "Something went wrong");
       }
@@ -129,7 +134,7 @@ export default function LoginForm() {
           </Paragraph>
         </div>
 
-        <Form layout="vertical" onFinish={onFinish} size="large">
+        <Form form={form} layout="vertical" onFinish={onFinish} size="large">
           <Form.Item
             name="email"
             rules={[

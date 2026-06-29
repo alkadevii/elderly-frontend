@@ -523,8 +523,7 @@ export default function AdminDashboard() {
     switch (activeKey) {
       case "1":
         return (
-          <div>
-            <Title level={3} style={{ marginTop: 0 }}>Admin Dashboard</Title>
+            <div>
             <Row gutter={20} style={{ marginBottom: 24 }}>
               <Col span={6}>
                 <Card style={{ borderRadius: 16, textAlign: "center" }}>
@@ -569,8 +568,7 @@ export default function AdminDashboard() {
       case "2":
         return (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Title level={3} style={{ margin: 0 }}>Users</Title>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 16 }}>
               <Select
                 value={userRoleFilter}
                 onChange={setUserRoleFilter}
@@ -602,8 +600,7 @@ export default function AdminDashboard() {
       case "3":
         return (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Title level={3} style={{ margin: 0 }}>Hospitals</Title>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 16 }}>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => {
                 setEditingHospital(null);
                 hospitalForm.resetFields();
@@ -620,8 +617,7 @@ export default function AdminDashboard() {
       case "4":
         return (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Title level={3} style={{ margin: 0 }}>Staff Management</Title>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 16 }}>
               <Button type="primary" icon={<UserAddOutlined />} onClick={() => {
                 staffForm.resetFields();
                 setStaffModalOpen(true);
@@ -671,7 +667,6 @@ export default function AdminDashboard() {
       case "5":
         return (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Pending Profiles</Title>
             <Card style={{ borderRadius: 16 }}>
               {pendingProfiles.length === 0 ? (
                 <Paragraph style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
@@ -686,7 +681,6 @@ export default function AdminDashboard() {
       case "6":
         return (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Unassigned Users</Title>
             <Paragraph style={{ color: colors.textSecondary, marginBottom: 16 }}>
               Verified users who have not yet been assigned a staff member.
             </Paragraph>
@@ -716,7 +710,6 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Staff Performance</Title>
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
               <Col xs={24} sm={8}>
                 <Card style={{ borderRadius: 16, textAlign: "center" }}>

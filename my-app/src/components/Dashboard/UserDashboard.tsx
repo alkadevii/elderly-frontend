@@ -31,6 +31,7 @@ import {
   SafetyCertificateOutlined,
   BellOutlined,
   DashboardOutlined,
+  FileTextOutlined,
 
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
@@ -48,6 +49,9 @@ import EmergencyContactSection from "./EmergencyContactSection";
 import MedicalConditionSection from "./MedicalConditionSection";
 import MedicationSection from "./MedicationSection";
 import VitalsSection from "./VitalsSection";
+import MedicationLogSection from "./MedicationLogSection";
+import MedicationReminderBanner from "./MedicationReminderBanner";
+import DashboardAnalytics from "./DashboardAnalytics";
 import UserFeedbackSection from "./UserFeedbackSection";
 
 
@@ -164,6 +168,12 @@ export default function UserDashboard({
             <DashboardOutlined style={{ color: colors.primary }} />,
             "Log and track your vital signs over time."
           );
+        case "7":
+          return renderLockedFeature(
+            "Medication Logs",
+            <FileTextOutlined style={{ color: colors.primary }} />,
+            "Track your medication adherence and view history."
+          );
 
         default:
           return renderSetupGuide();
@@ -183,6 +193,8 @@ export default function UserDashboard({
         return <MedicationSection />;
       case "6":
         return <VitalsSection />;
+      case "7":
+        return <MedicationLogSection />;
 
       default:
         return renderOverview();
@@ -191,10 +203,6 @@ export default function UserDashboard({
 
   const renderSetupGuide = () => (
     <div>
-      <Title level={3} style={{ marginTop: 0 }}>
-        Account Setup
-      </Title>
-
       <Card style={{ marginBottom: 24, borderRadius: 16 }}>
         <Paragraph style={{ fontSize: 16, marginBottom: 24 }}>
           Follow these steps to unlock all Elder Care features:
@@ -271,10 +279,6 @@ export default function UserDashboard({
 
     return (
     <>
-      <Title level={3} style={{ margin: 0 }}>
-        Dashboard
-      </Title>
-
       <Card style={{ marginTop: 24, marginBottom: 24, borderRadius: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <Avatar size={90} src={user.profileImage} icon={<UserOutlined />} />
@@ -291,6 +295,8 @@ export default function UserDashboard({
           </div>
         </div>
       </Card>
+
+      <MedicationReminderBanner />
 
       <div style={{ marginBottom: 24 }}>
         <UserFeedbackSection />
@@ -427,6 +433,10 @@ export default function UserDashboard({
           </Card>
         </Col>
       </Row>
+
+      <div style={{ marginTop: 24 }}>
+        <DashboardAnalytics />
+      </div>
     </>
     );
   };
@@ -471,6 +481,12 @@ export default function UserDashboard({
       label: "Vitals",
       disabled: !isFullyVerified,
     },
+    {
+      key: "7",
+      icon: isFullyVerified ? <FileTextOutlined /> : <LockOutlined />,
+      label: "Medication Logs",
+      disabled: !isFullyVerified,
+    },
 
   ];
 
@@ -482,6 +498,7 @@ export default function UserDashboard({
       "4": "Medical Conditions",
       "5": "Medications",
       "6": "Vitals",
+      "7": "Medication Logs",
 
     };
     return labels[activeKey] || "";

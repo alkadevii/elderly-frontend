@@ -641,8 +641,6 @@ export default function StaffDashboard() {
       case "1":
         return (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Staff Dashboard</Title>
-
             {/* Row 1: My Activity */}
             <Card style={{ borderRadius: 16, marginBottom: 20 }} size="small">
               <Row gutter={[16, 16]}>
@@ -805,7 +803,7 @@ export default function StaffDashboard() {
                     <div key={r._id} style={{ padding: "8px 0", borderTop: "1px solid #f5f5f5" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Space>
-                          <Typography.Text style={{ fontSize: 12 }}>{r.user?.name || "Unknown"}</Typography.Text>
+                          <Typography.Text style={{ fontSize: 12 }}>Anonymous</Typography.Text>
                           <Rate disabled value={r.rating} style={{ fontSize: 11 }} />
                         </Space>
                         <Typography.Text style={{ fontSize: 11, color: colors.textSecondary }}>
@@ -825,7 +823,6 @@ export default function StaffDashboard() {
       case "2":
         return (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Assigned Users</Title>
             <Card style={{ borderRadius: 16 }}>
               {assignedUsers.length === 0 ? (
                 <Paragraph style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>
@@ -867,7 +864,6 @@ export default function StaffDashboard() {
       case "3":
         return (
           <div>
-            <Title level={3} style={{ marginTop: 0 }}>Pending Requests</Title>
             <Card style={{ borderRadius: 16 }}>
               {pendingAppointments.length === 0 ? (
                 <Paragraph style={{ color: colors.textSecondary, textAlign: "center", padding: 40 }}>

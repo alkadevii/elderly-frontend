@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Button,
   Card,
@@ -38,7 +37,7 @@ const isDuplicateEmailError = (msg: string) =>
 
 export default function RegisterForm() {
   const router = useRouter();
-  const [formKey, setFormKey] = useState(0);
+  const [form] = Form.useForm();
 
   const onFinish = async (values: RegisterFormValues) => {
     try {
@@ -56,8 +55,12 @@ export default function RegisterForm() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Something went wrong";
       if (isDuplicateEmailError(msg)) {
-        message.error("User with same email already exists");
-        setFormKey((k) => k + 1);
+        form.setFields([
+          {
+            name: "email",
+            errors: ["User with same email already exists"],
+          },
+        ]);
       } else {
         message.error(msg);
       }
@@ -122,7 +125,7 @@ export default function RegisterForm() {
           </Paragraph>
         </div>
 
-        <Form key={formKey} layout="vertical" onFinish={onFinish} size="large">
+        <Form form={form} layout="vertical" onFinish={onFinish} size="large">
           <Form.Item
             name="name"
             rules={[{ required: true, message: "Please enter your name" }]}
