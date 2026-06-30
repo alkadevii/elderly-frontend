@@ -448,6 +448,9 @@ export default function StaffDashboard() {
               <Descriptions.Item label="Date of Birth">
                 {selectedUser?.dateOfBirth ? dayjs(selectedUser.dateOfBirth).format("MMM D, YYYY") : "-"}
               </Descriptions.Item>
+              <Descriptions.Item label="Age">
+                {selectedUser?.age ?? (selectedUser?.dateOfBirth ? dayjs().diff(dayjs(selectedUser.dateOfBirth), "year") : "-")}
+              </Descriptions.Item>
               <Descriptions.Item label="Blood Group">{selectedUser?.bloodGroup || "-"}</Descriptions.Item>
               <Descriptions.Item label="Gender">
                 {selectedUser?.gender ? selectedUser.gender.charAt(0).toUpperCase() + selectedUser.gender.slice(1) : "-"}

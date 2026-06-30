@@ -95,6 +95,7 @@ export default function CompleteProfilePage() {
           form.setFieldsValue({
             profileImage: user.profileImage || "",
             dateOfBirth: user.dateOfBirth ? dayjs(user.dateOfBirth) : undefined,
+            age: user.age ?? undefined,
             gender: user.gender || undefined,
             bloodGroup: user.bloodGroup || undefined,
             phone: user.phone || "",
@@ -123,6 +124,7 @@ export default function CompleteProfilePage() {
         dateOfBirth: values.dateOfBirth
           ? dayjs(values.dateOfBirth as Parameters<typeof dayjs>[0]).format("YYYY-MM-DD")
           : undefined,
+        age: values.age ? Number(values.age) : undefined,
         gender: values.gender as "male" | "female" | "other" | undefined,
         bloodGroup: values.bloodGroup as UpdateProfileData["bloodGroup"] | undefined,
         phone: values.phone as string,
@@ -292,6 +294,9 @@ export default function CompleteProfilePage() {
                 <Col xs={24} sm={12}>
                   <Form.Item label="Date of Birth" name="dateOfBirth">
                     <DatePicker style={{ width: "100%" }} size="large" />
+                  </Form.Item>
+                  <Form.Item label="Age" name="age">
+                    <Input type="number" size="large" placeholder="Enter age" min={0} max={150} />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>

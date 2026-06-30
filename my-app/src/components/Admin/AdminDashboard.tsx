@@ -1150,6 +1150,7 @@ export default function AdminDashboard() {
               <Card title="Basic Information" style={{ borderRadius: 12, marginBottom: 16 }} size="small">
                 <Row gutter={[16, 8]}>
                   <Col span={8}><strong>Date of Birth:</strong> {viewingUser.dateOfBirth ? dayjs(viewingUser.dateOfBirth).format("MMM D, YYYY") : "-"}</Col>
+                  <Col span={8}><strong>Age:</strong> {viewingUser.age ?? (viewingUser.dateOfBirth ? dayjs().diff(dayjs(viewingUser.dateOfBirth), "year") : "-")}</Col>
                   <Col span={8}><strong>Gender:</strong> {viewingUser.gender ? viewingUser.gender.charAt(0).toUpperCase() + viewingUser.gender.slice(1) : "-"}</Col>
                   <Col span={8}><strong>Blood Group:</strong> {viewingUser.bloodGroup || "-"}</Col>
                   <Col span={8}><strong>Phone:</strong> {viewingUser.phone || "-"}</Col>

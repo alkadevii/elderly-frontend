@@ -15,6 +15,7 @@ export type User = {
   verificationStatus?: "pending" | "verified" | "rejected";
   profileImage?: string;
   dateOfBirth?: string;
+  age?: number;
   gender?: "male" | "female" | "other";
   bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
   identificationMark?: string;

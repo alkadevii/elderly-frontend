@@ -339,7 +339,7 @@ export default function UserDashboard({
       <Row gutter={20} style={{ marginBottom: 24 }}>
         <Col span={6}>
           <Card style={{ borderRadius: 16, textAlign: "center" }}>
-            <Title level={3}>{user.dateOfBirth ? dayjs().diff(dayjs(user.dateOfBirth), "year") : "--"}</Title>
+            <Title level={3}>{user.age ?? (user.dateOfBirth ? dayjs().diff(dayjs(user.dateOfBirth), "year") : "--")}</Title>
             <Paragraph>Age</Paragraph>
           </Card>
         </Col>
@@ -376,7 +376,7 @@ export default function UserDashboard({
             style={{ borderRadius: 16, height: "100%" }}
           >
             <p><strong>Date of Birth:</strong> {user.dateOfBirth ? dayjs(user.dateOfBirth).format("MMM D, YYYY") : "-"}</p>
-            <p><strong>Age:</strong> {user.dateOfBirth ? dayjs().diff(dayjs(user.dateOfBirth), "year") : "-"}</p>
+            <p><strong>Age:</strong> {user.age ?? (user.dateOfBirth ? dayjs().diff(dayjs(user.dateOfBirth), "year") : "-")}</p>
             <p><strong>Gender:</strong> {user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "-"}</p>
             <p><strong>Blood Group:</strong> {user.bloodGroup || "-"}</p>
             <p><strong>Phone:</strong> {user.phone || "-"}</p>
